@@ -1,105 +1,114 @@
-### **1. Business Rules and Assumptions**
 
-This section translates the assignment requirements and the lecturer's sketch into formal rules.
+### **1. Business Rules and Assumptions (For your Report)**
 
-1.  **Core Entities:** The system will manage `Members`, `Companies`, `Buses`, `Drivers`, `Staff`, and `Shops` as distinct entities.
-2.  **Booking and Ticketing:** A `Booking` is the process a `Member` undertakes to reserve a seat. A successful booking results in the creation of one or more `Tickets`. For simplicity and normalization, we will model this as a direct relationship between `Member` and `Ticket`, where the `Ticket` table represents the successful booking.
-3.  **Ticket Management:** A `Ticket` can have its status changed to 'Cancelled' or 'Extended' based on business rules (e.g., the 2-day advance notice). Events like `Refund` and `Extension` charges will be managed by procedures acting on the `Ticket` table.
-4.  **Schedules and Operations:** A `Schedule` represents a single trip. It follows a `Route`, uses one `Bus`, and departs from a `Platform`.
-5.  **Driver Allocation (Many-to-Many):** A single `Schedule` (especially a long one) can have multiple `Drivers` assigned to it (e.g., for shift changes). A `Driver` can be assigned to many different `Schedules`. This requires a **bridge table**, which we will call **`DriverList`** as per the sketch.
-6.  **Promotions (Many-to-Many):** A `Promotion` can be valid for many `Schedules`, and a `Schedule` can be eligible for many promotions. This requires a **bridge table**.
-7.  **Maintenance (One-to-Many):** A `Bus` can undergo many maintenance services. Each event is logged. We will have a lookup table for `Service` types and a transaction table called **`ServiceDetails`** to log the work done.
-8.  **Staff and Shops:** The station manages its own `Staff` and the `Shops` it rents out. We will track staff assignments and rental payment collections.
+This section formalizes the logic from your lecturer's diagram and the assignment requirements.
+
+1.  **Booking & Ticketing Process:** A `Member` initiates a `Booking`. A `Booking` acts as a "shopping cart" or "order" that can contain multiple `Tickets`. The `BookingDetails` table serves as a bridge, linking each individual `Ticket` to its parent `Booking`.
+2.  **Payment & Transactions:** Every `Booking` must be associated with a single `Payment` transaction to be confirmed. We assume a `Payment` table to track this. The assignment also requires tracking `Refund` and `Extension` events, which will be modeled as their own tables linked to the original `Ticket` to maintain a clear audit trail.
+3.  **Scheduling & Driver Allocation:** A `Schedule` represents a single trip following a specific `Route`. Critically, a `Schedule` can be operated by **one or more** `Drivers` (to allow for driver swaps on long routes). This many-to-many relationship is resolved by the `DriverList` bridge table.
+4.  **Promotions:** A `Campaign` contains one or more `Promotions`. These promotions are made available on specific schedules, creating a many-to-many relationship that is not explicitly shown in the diagram but is required for the system to function. We will use a `Promotion_Schedule` bridge table for this.
+5.  **Maintenance & Services:** A `Service` table will define the *types* of maintenance available (e.g., 'Tyre Replace', 'Wash'). The `ServiceDetails` table will act as a log, recording *when* a specific `Service` was performed on a specific `Bus`.
+6.  **Staff & Facilities Management:** `Staff` are managed separately from `Drivers`. `StaffAllocation` will be a bridge table to assign staff to specific tasks or locations (e.g., shifts on a `Platform`). `Shop` entities are managed for rental, with `RentalCollection` logging the rental payments.
 
 ---
 
 ### **2. Entity & Attribute Breakdown (The Tables)**
 
-Here is the professional interpretation of the lecturer's sketch, organized into a list of normalized tables.
+Here are the tables based on your diagram, designed in 3NF with their purpose, columns, and keys defined.
 
 *   **Table: `Member`**
     *   **Purpose:** Stores registered customer information.
-    *   **Attributes:** `member_id` (PK), `name`, `email`, `contact_no`, `registration_date`.
+    *   **Columns:** `member_id` (PK), `name`, `email`, `contact_no`, `registration_date`.
+    *   **3NF Justification:** Centralizes member data, preventing redundancy in transaction tables.
 
 *   **Table: `Company`**
-    *   **Purpose:** Stores bus company details.
-    *   **Attributes:** `company_id` (PK), `name`, `contact_person`.
+    *   **Purpose:** Stores bus company information.
+    *   **Columns:** `company_id` (PK), `name`.
 
 *   **Table: `Driver`**
-    *   **Purpose:** Stores individual driver details.
-    *   **Attributes:** `driver_id` (PK), `name`, `license_no`, `company_id` (FK).
+    *   **Purpose:** Stores bus driver details.
+    *   **Columns:** `driver_id` (PK), `name`, `license_no`, `company_id` (FK).
 
 *   **Table: `Bus`**
-    *   **Purpose:** Manages the physical bus fleet.
-    *   **Attributes:** `bus_id` (PK), `plate_number`, `capacity`, `status`, `company_id` (FK).
+    *   **Purpose:** Manages the physical fleet of buses.
+    *   **Columns:** `bus_id` (PK), `plate_number`, `capacity`, `status`, `company_id` (FK).
 
 *   **Table: `Route`**
-    *   **Purpose:** Defines origin-destination pairs. Essential for 3NF.
-    *   **Attributes:** `route_id` (PK), `origin`, `destination`.
+    *   **Purpose:** Defines origin and destination pairs.
+    *   **Columns:** `route_id` (PK), `origin`, `destination`.
+    *   **3NF Justification:** Prevents a transitive dependency in the `Schedule` table. `Destination` depends on the `Route`, not directly on the `Schedule`.
 
 *   **Table: `Platform`**
-    *   **Purpose:** Manages the physical bus platforms.
-    *   **Attributes:** `platform_no` (PK), `location_desc`, `status`.
+    *   **Purpose:** Manages the physical bus platforms at the station.
+    *   **Columns:** `platform_no` (PK), `location_desc`, `status`.
 
 *   **Table: `Schedule`**
-    *   **Purpose:** Represents a single, specific bus trip.
-    *   **Attributes:** `schedule_id` (PK), `departure_time`, `arrival_time`, `price`, `bus_id` (FK), `route_id` (FK), `platform_no` (FK).
-
-*   **Table: `DriverList` (Bridge Table)**
-    *   **Purpose:** Resolves the Many-to-Many relationship between `Schedule` and `Driver`.
-    *   **Attributes:** `schedule_id` (PK, FK), `driver_id` (PK, FK), `shift_assignment` (e.g., 'First Leg').
+    *   **Purpose:** Defines a specific trip at a specific time, using specific assets.
+    *   **Columns:** `schedule_id` (PK), `departure_time`, `arrival_time`, `base_price`, `bus_id` (FK), `route_id` (FK), `platform_no` (FK).
 
 *   **Table: `Ticket`**
-    *   **Purpose:** The central transaction table, representing a confirmed booking.
-    *   **Attributes:** `ticket_id` (PK), `purchase_date`, `final_price`, `status` ('Confirmed', 'Cancelled', 'Extended'), `member_id` (FK), `schedule_id` (FK), `promotion_id` (FK, optional).
+    *   **Purpose:** Represents a single, unique ticket for a seat on a schedule.
+    *   **Columns:** `ticket_id` (PK), `seat_number`, `status`, `schedule_id` (FK).
+
+*   **Table: `Booking`**
+    *   **Purpose:** Acts as an "order header" for a transaction initiated by a member.
+    *   **Columns:** `booking_id` (PK), `booking_date`, `total_amount`, `member_id` (FK).
+
+*   **Table: `BookingDetails` (Bridge Table)**
+    *   **Purpose:** Links a `Booking` to the multiple `Tickets` purchased within that single transaction.
+    *   **Columns:** `booking_id` (PK, FK), `ticket_id` (PK, FK), `price_at_booking`.
+
+*   **Table: `DriverList` (Bridge Table)**
+    *   **Purpose:** Resolves the many-to-many relationship between `Schedule` and `Driver`.
+    *   **Columns:** `schedule_id` (PK, FK), `driver_id` (PK, FK), `segment_of_journey`.
 
 *   **Table: `Campaign` & `Promotion`**
-    *   **Purpose:** Manages marketing efforts.
-    *   **`Campaign` Attributes:** `campaign_id` (PK), `campaign_name`, `start_date`, `end_date`.
-    *   **`Promotion` Attributes:** `promotion_id` (PK), `promo_code`, `discount_type`, `discount_value`, `campaign_id` (FK).
+    *   **Purpose:** Manage marketing initiatives.
+    *   **Columns (`Campaign`):** `campaign_id` (PK), `campaign_name`, `start_date`, `end_date`.
+    *   **Columns (`Promotion`):** `promotion_id` (PK), `promo_code`, `discount_type`, `discount_value`, `campaign_id` (FK).
 
-*   **Table: `Promotion_Schedule` (Bridge Table)**
-    *   **Purpose:** Resolves the Many-to-Many relationship between `Promotion` and `Schedule`.
-    *   **Attributes:** `promotion_id` (PK, FK), `schedule_id` (PK, FK).
+*   **Table: `Payment`, `Refund`, `Extension`**
+    *   **Purpose:** To explicitly log all financial events related to a booking or ticket.
+    *   **Columns (`Payment`):** `payment_id` (PK), `payment_date`, `amount`, `payment_method`, `booking_id` (FK).
+    *   **Columns (`Refund`):** `refund_id` (PK), `refund_date`, `refund_amount`, `ticket_id` (FK).
+    *   **Columns (`Extension`):** `extension_id` (PK), `extension_date`, `extension_fee`, `original_ticket_id` (FK), `new_ticket_id` (FK).
 
-*   **Table: `Service`**
-    *   **Purpose:** A lookup table for maintenance types as per the sketch.
-    *   **Attributes:** `service_id` (PK), `service_name` ('Repair', 'Tyre', 'Wash'), `description`.
+*   **Table: `Service` & `ServiceDetails`**
+    *   **Purpose:** Manage bus maintenance.
+    *   **Columns (`Service`):** `service_id` (PK), `service_name` (e.g., 'Tyre Replace'), `standard_cost`.
+    *   **Columns (`ServiceDetails`):** `service_transaction_id` (PK), `service_date`, `actual_cost`, `bus_id` (FK), `service_id` (FK).
 
-*   **Table: `ServiceDetails` (Transaction Table)**
-    *   **Purpose:** Logs a specific maintenance service performed on a bus.
-    *   **Attributes:** `service_transaction_id` (PK), `log_date`, `cost`, `remarks`, `bus_id` (FK), `service_id` (FK).
-
-*   **Table: `Staff` & `Shop`**
-    *   **Purpose:** Manages internal staff and rental shops.
-    *   **`Staff` Attributes:** `staff_id` (PK), `name`, `role` ('Counter Staff', 'Cleaner').
-    *   **`Shop` Attributes:** `shop_id` (PK), `location_code`, `shop_type` ('Stall', 'Shop Lot').
-
-*   **Table: `RentalCollection` (Transaction Table)**
-    *   **Purpose:** Logs rental payments collected from shops.
-    *   **Attributes:** `rental_collection_id` (PK), `payment_date`, `amount`, `month_covered`, `shop_id` (FK).
+*   **Table: `Staff`, `Shop`, `StaffAllocation`, `RentalCollection`**
+    *   **Purpose:** Manage internal staff and commercial tenants.
+    *   **Columns (`Staff`):** `staff_id` (PK), `name`, `role`.
+    *   **Columns (`Shop`):** `shop_id` (PK), `location_code`, `shop_type`.
+    *   **Columns (`StaffAllocation` - Bridge):** `allocation_id` (PK), `staff_id` (FK), `platform_no` (FK), `shift_date`.
+    *   **Columns (`RentalCollection`):** `rental_collection_id` (PK), `payment_date`, `amount`, `shop_id` (FK).
 
 ---
 
-### **3. Relationships (Foreign Keys)**
+### **3. Relationships (The Foreign Keys)**
 
-This is your guide for drawing the connections in your ERD.
+This table is your direct guide for drawing the connections in your ERD.
 
-| Child Table / Bridge Table | Foreign Key Column(s) | Parent Table(s) | Relationship |
-| :--- | :--- | :--- | :--- |
-| **Driver** | `company_id` | `Company` | One-to-Many |
-| **Bus** | `company_id` | `Company` | One-to-Many |
-| **Schedule** | `bus_id` | `Bus` | One-to-Many |
-| **Schedule** | `route_id` | `Route` | One-to-Many |
-| **Schedule** | `platform_no`| `Platform` | One-to-Many |
-| **DriverList** | `schedule_id`, `driver_id` | `Schedule`, `Driver` | Many-to-Many |
-| **Ticket** | `member_id` | `Member` | One-to-Many |
-| **Ticket** | `schedule_id` | `Schedule` | One-to-Many |
-| **Ticket** | `promotion_id`| `Promotion` | One-to-Many (Opt.)|
-| **Promotion** | `campaign_id`| `Campaign` | One-to-Many |
-| **Promotion_Schedule**| `promotion_id`, `schedule_id` | `Promotion`, `Schedule` | Many-to-Many |
-| **ServiceDetails** | `bus_id` | `Bus` | One-to-Many |
-| **ServiceDetails** | `service_id` | `Service` | One-to-Many |
-| **RentalCollection** | `shop_id` | `Shop` | One-to-Many |
-
-You now have a complete, structured blueprint based on your lecturer's guidance, refined with professional design principles. Use this to draw your ERD and then proceed to write the DDL.
+| Child Table | Foreign Key Column | Parent Table | Relationship Type | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **Driver** | `company_id` | `Company` | One-to-Many | A Driver belongs to one Company. |
+| **Bus** | `company_id` | `Company` | One-to-Many | A Bus is owned by one Company. |
+| **Schedule** | `bus_id` | `Bus` | One-to-Many | A Schedule uses one Bus. |
+| **Schedule** | `route_id` | `Route` | One-to-Many | A Schedule follows one Route. |
+| **Schedule** | `platform_no` | `Platform` | One-to-Many | A Schedule departs from one Platform. |
+| **Ticket** | `schedule_id` | `Schedule` | One-to-Many | A Ticket is for one Schedule. |
+| **Booking** | `member_id` | `Member` | One-to-Many | A Booking is made by one Member. |
+| **Payment** | `booking_id` | `Booking` | One-to-One | A Booking has one Payment. |
+| **BookingDetails** | `booking_id` | `Booking` | Many-to-Many | Links Bookings to Tickets. |
+| **BookingDetails** | `ticket_id` | `Ticket` | Many-to-Many | Links Tickets to Bookings. |
+| **DriverList** | `schedule_id` | `Schedule` | Many-to-Many | Links Schedules to Drivers. |
+| **DriverList** | `driver_id` | `Driver` | Many-to-Many | Links Drivers to Schedules. |
+| **Promotion** | `campaign_id`| `Campaign`| One-to-Many | A Promotion is part of one Campaign. |
+| **Refund** | `ticket_id` | `Ticket` | One-to-Many | A Ticket can have refunds logged. |
+| **Extension** | `original_ticket_id`| `Ticket` | One-to-Many | An Extension event relates to a Ticket. |
+| **ServiceDetails** | `bus_id` | `Bus` | One-to-Many | A Service is performed on a Bus. |
+| **ServiceDetails** | `service_id` | `Service` | One-to-Many | Identifies the type of service. |
+| **StaffAllocation**| `staff_id` | `Staff` | Many-to-Many | Links Staff to tasks/locations. |
+| **RentalCollection**| `shop_id` | `Shop` | One-to-Many | Rent is collected for a Shop. |
