@@ -1,5 +1,10 @@
 # Bus Station Management System
 
+ORACLE 11g SQL Plus
+username: dbmanagement
+password: abcxyz
+
+
 This project is a comprehensive relational database system designed to manage the core operations of a bus station. Built on Oracle 11g, it utilizes PL/SQL to implement complex business logic, enforce data integrity, and generate insightful reports. The system handles everything from member registration and ticket bookings to schedule management and vehicle maintenance.
 
 ## System Architecture Overview

@@ -51,7 +51,7 @@ CREATE TABLE Staff (
     name                VARCHAR2(100) NOT NULL,
     role                VARCHAR2(50) NOT NULL,
     email               VARCHAR2(100) NOT NULL UNIQUE,
-    contact_no          VARCHAR2(20) NOT NULL,
+    contact_no          VARCHAR2(25) NOT NULL,
     employment_date     DATE NOT NULL,
     status              VARCHAR2(20) NOT NULL,
     CONSTRAINT pk_staff PRIMARY KEY (staff_id),
@@ -78,7 +78,7 @@ CREATE TABLE Member (
     member_id           NUMBER(10) NOT NULL,
     name                VARCHAR2(100) NOT NULL,
     email               VARCHAR2(100) NOT NULL UNIQUE,
-    contact_no          VARCHAR2(20) NOT NULL,
+    contact_no          VARCHAR2(25) NOT NULL,
     registration_date   DATE DEFAULT SYSDATE NOT NULL,
     CONSTRAINT pk_member PRIMARY KEY (member_id)
 );
@@ -235,3 +235,5 @@ CREATE TABLE StaffAllocation (
     CONSTRAINT fk_sa_servicedetails FOREIGN KEY (service_transaction_id) REFERENCES ServiceDetails(service_transaction_id),
     CONSTRAINT fk_sa_staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
 );
+
+COMMIT;
