@@ -1,98 +1,237 @@
-### **1. Business Rules and Assumptions (For your Report)**
+--=============================================================================
+-- Sequences for Primary Key Generation
+--=============================================================================
+CREATE SEQUENCE company_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE bus_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE schedule_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE driver_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE staff_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE shop_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE rental_collection_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE service_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE service_details_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE campaign_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE promotion_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE member_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE payment_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE booking_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE ticket_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE refund_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE extension_seq START WITH 1 INCREMENT BY 1;
 
-1.  **Booking Process:** A `Member` creates a single `Booking` transaction to purchase one or more `Tickets`. The `BookingDetails` table links the booking to the tickets.
-2.  **Financials:** A `Booking` is associated with one `Payment`. If a ticket is cancelled or extended, a `Refund` or `Extension` record is created, linking back to the original `Ticket`.
-3.  **Driver Assignments:** A `Schedule` can have multiple `Drivers` assigned to it throughout its journey (e.g., for long routes with driver switches). This is a **many-to-many relationship** managed by the `DriverList` table.
-4.  **Campaigns:** A `Campaign` contains `Promotions`. These are applied at the `Booking` or `Ticket` level.
-5.  **Operations:** A `Company` owns `Buses`. A `Schedule` uses one `Bus`.
-6.  **Staffing:** A `Staff` member can be assigned to work on multiple `Schedules` (e.g., counter staff for a specific departure). This is managed by `StaffAllocation`.
-7.  **Maintenance:** A `Service` (e.g., "Tyre Replacement") can be performed on many buses. A record of each specific service event is logged in `ServiceDetails`.
-8.  **Denormalization for Practicality (Assumption):** As per requirements, the origin/destination stations and platform information will be stored directly in the `Schedule` table to simplify schedule-based queries.
+--=============================================================================
+-- Table Creation Script
+--=============================================================================
 
----
+CREATE TABLE Company (
+    company_id      NUMBER(10) NOT NULL,
+    name            VARCHAR2(100) NOT NULL,
+    CONSTRAINT pk_company PRIMARY KEY (company_id)
+);
 
-### **2. Entity & Attribute Breakdown (The Tables)**
+CREATE TABLE Bus (
+    bus_id          NUMBER(10) NOT NULL,
+    plate_number    VARCHAR2(20) NOT NULL UNIQUE,
+    capacity        NUMBER(3) NOT NULL,
+    company_id      NUMBER(10) NOT NULL,
+    CONSTRAINT pk_bus PRIMARY KEY (bus_id),
+    CONSTRAINT fk_bus_company FOREIGN KEY (company_id) REFERENCES Company(company_id),
+    CONSTRAINT chk_bus_capacity CHECK (capacity > 0)
+);
 
-Here are the tables based on the sketch, with their purpose and attributes defined.
+CREATE TABLE Driver (
+    driver_id       NUMBER(10) NOT NULL,
+    name            VARCHAR2(100) NOT NULL,
+    license_no      VARCHAR2(50) NOT NULL UNIQUE,
+    CONSTRAINT pk_driver PRIMARY KEY (driver_id)
+);
 
-*   **Table: `Member`**
-    *   **Purpose:** Stores customer information.
-    *   **Attributes:** `member_id` (PK), `name`, `email`, `contact_no`, `registration_date`.
+CREATE TABLE Staff (
+    staff_id            NUMBER(10) NOT NULL,
+    name                VARCHAR2(100) NOT NULL,
+    role                VARCHAR2(50) NOT NULL,
+    email               VARCHAR2(100) NOT NULL UNIQUE,
+    contact_no          VARCHAR2(20) NOT NULL,
+    employment_date     DATE NOT NULL,
+    status              VARCHAR2(20) NOT NULL,
+    CONSTRAINT pk_staff PRIMARY KEY (staff_id),
+    CONSTRAINT chk_staff_role CHECK (role IN ('Counter Staff', 'Cleaner', 'Manager', 'Technician')),
+    CONSTRAINT chk_staff_status CHECK (status IN ('Active', 'Resigned', 'On Leave'))
+);
 
-*   **Table: `Booking`**
-    *   **Purpose:** Represents a single transaction or "shopping cart" event by a member.
-    *   **Attributes:** `booking_id` (PK), `booking_date`, `total_amount`, `member_id` (FK).
+CREATE TABLE Shop (
+    shop_id         NUMBER(10) NOT NULL,
+    shop_name       VARCHAR2(100) NOT NULL,
+    location_code   VARCHAR2(20) NOT NULL UNIQUE,
+    CONSTRAINT pk_shop PRIMARY KEY (shop_id)
+);
 
-*   **Table: `Ticket`**
-    *   **Purpose:** Represents a single, specific ticket for a seat on a schedule.
-    *   **Attributes:** `ticket_id` (PK), `seat_number`, `status` ('Confirmed', 'Cancelled'), `schedule_id` (FK).
+CREATE TABLE Service (
+    service_id      NUMBER(10) NOT NULL,
+    service_name    VARCHAR2(100) NOT NULL,
+    standard_cost   NUMBER(10, 2) NOT NULL,
+    CONSTRAINT pk_service PRIMARY KEY (service_id),
+    CONSTRAINT chk_service_cost CHECK (standard_cost >= 0)
+);
 
-*   **Table: `Schedule`**
-    *   **Purpose:** Defines a specific bus trip.
-    *   **Attributes:** `schedule_id` (PK), `departure_time`, `arrival_time`, `base_price`, `origin_station`, `destination_station`, `platform_no`, `bus_id` (FK).
+CREATE TABLE Member (
+    member_id           NUMBER(10) NOT NULL,
+    name                VARCHAR2(100) NOT NULL,
+    email               VARCHAR2(100) NOT NULL UNIQUE,
+    contact_no          VARCHAR2(20) NOT NULL,
+    registration_date   DATE DEFAULT SYSDATE NOT NULL,
+    CONSTRAINT pk_member PRIMARY KEY (member_id)
+);
 
-*   **Table: `Company`**
-    *   **Purpose:** Stores information about bus companies.
-    *   **Attributes:** `company_id` (PK), `name`.
+CREATE TABLE Payment (
+    payment_id      NUMBER(10) NOT NULL,
+    payment_date    DATE DEFAULT SYSDATE NOT NULL,
+    amount          NUMBER(10, 2) NOT NULL,
+    payment_method  VARCHAR2(50) NOT NULL,
+    CONSTRAINT pk_payment PRIMARY KEY (payment_id),
+    CONSTRAINT chk_payment_amount CHECK (amount > 0),
+    CONSTRAINT chk_payment_method CHECK (payment_method IN ('Credit Card', 'Debit Card', 'Online Banking', 'E-Wallet'))
+);
 
-*   **Table: `Bus`**
-    *   **Purpose:** Manages the physical bus fleet.
-    *   **Attributes:** `bus_id` (PK), `plate_number`, `capacity`, `company_id` (FK).
+CREATE TABLE Campaign (
+    campaign_id     NUMBER(10) NOT NULL,
+    campaign_name   VARCHAR2(100) NOT NULL,
+    start_date      DATE NOT NULL,
+    end_date        DATE NOT NULL,
+    CONSTRAINT pk_campaign PRIMARY KEY (campaign_id),
+    CONSTRAINT chk_campaign_dates CHECK (end_date >= start_date)
+);
 
-*   **Table: `Driver`**
-    *   **Purpose:** Stores details of all drivers.
-    *   **Attributes:** `driver_id` (PK), `name`, `license_no`.
+CREATE TABLE Schedule (
+    schedule_id         NUMBER(10) NOT NULL,
+    departure_time      DATE NOT NULL,
+    arrival_time        DATE NOT NULL,
+    base_price          NUMBER(10, 2) NOT NULL,
+    origin_station      VARCHAR2(100) NOT NULL,
+    destination_station VARCHAR2(100) NOT NULL,
+    platform_no         VARCHAR2(10),
+    bus_id              NUMBER(10) NOT NULL,
+    CONSTRAINT pk_schedule PRIMARY KEY (schedule_id),
+    CONSTRAINT fk_schedule_bus FOREIGN KEY (bus_id) REFERENCES Bus(bus_id),
+    CONSTRAINT chk_schedule_times CHECK (arrival_time > departure_time),
+    CONSTRAINT chk_schedule_price CHECK (base_price > 0)
+);
 
-*   **Table: `Campaign`**
-    *   **Purpose:** Manages high-level marketing campaigns.
-    *   **Attributes:** `campaign_id` (PK), `campaign_name`, `start_date`, `end_date`.
+CREATE TABLE DriverList (
+    schedule_id         NUMBER(10) NOT NULL,
+    driver_id           NUMBER(10) NOT NULL,
+    assignment_notes    VARCHAR2(255),
+    CONSTRAINT pk_driverlist PRIMARY KEY (schedule_id, driver_id),
+    CONSTRAINT fk_driverlist_schedule FOREIGN KEY (schedule_id) REFERENCES Schedule(schedule_id),
+    CONSTRAINT fk_driverlist_driver FOREIGN KEY (driver_id) REFERENCES Driver(driver_id)
+);
 
-*   **Table: `Service`**
-    *   **Purpose:** A lookup table for maintenance types.
-    *   **Attributes:** `service_id` (PK), `service_name` ('Repair', 'Tyre Replace'), `standard_cost`.
+CREATE TABLE Promotion (
+    promotion_id    NUMBER(10) NOT NULL,
+    promotion_name  VARCHAR2(100) NOT NULL,
+    description     VARCHAR2(255),
+    discount_type   VARCHAR2(20) NOT NULL,
+    discount_value  NUMBER(10, 2) NOT NULL,
+    applies_to      VARCHAR2(50),
+    valid_from      DATE NOT NULL,
+    valid_until     DATE NOT NULL,
+    condition       VARCHAR2(255),
+    campaign_id     NUMBER(10) NOT NULL,
+    CONSTRAINT pk_promotion PRIMARY KEY (promotion_id),
+    CONSTRAINT fk_promotion_campaign FOREIGN KEY (campaign_id) REFERENCES Campaign(campaign_id),
+    CONSTRAINT chk_promo_dates CHECK (valid_until >= valid_from),
+    CONSTRAINT chk_promo_discount_type CHECK (discount_type IN ('Percentage', 'Fixed Amount')),
+    CONSTRAINT chk_promo_discount_value CHECK (discount_value > 0)
+);
 
-*   **Table: `Staff`**
-    *   **Purpose:** Stores information on all station employees.
-    *   **Attributes:** `staff_id` (PK), `name`, `role` ('Counter', 'Cleaner').
+CREATE TABLE Ticket (
+    ticket_id       NUMBER(10) NOT NULL,
+    seat_number     VARCHAR2(10) NOT NULL,
+    status          VARCHAR2(20) NOT NULL,
+    schedule_id     NUMBER(10) NOT NULL,
+    promotion_id    NUMBER(10),
+    CONSTRAINT pk_ticket PRIMARY KEY (ticket_id),
+    CONSTRAINT fk_ticket_schedule FOREIGN KEY (schedule_id) REFERENCES Schedule(schedule_id),
+    CONSTRAINT fk_ticket_promotion FOREIGN KEY (promotion_id) REFERENCES Promotion(promotion_id),
+    CONSTRAINT chk_ticket_status CHECK (status IN ('Available', 'Booked', 'Cancelled', 'Extended'))
+);
 
-*   **Table: `Shop`**
-    *   **Purpose:** Manages the retail shops in the station.
-    *   **Attributes:** `shop_id` (PK), `shop_name`, `location_code`.
+CREATE TABLE Refund (
+    refund_id       NUMBER(10) NOT NULL,
+    refund_date     DATE NOT NULL,
+    amount          NUMBER(10, 2) NOT NULL,
+    refund_method   VARCHAR2(50) NOT NULL,
+    ticket_id       NUMBER(10) NOT NULL UNIQUE,
+    CONSTRAINT pk_refund PRIMARY KEY (refund_id),
+    CONSTRAINT fk_refund_ticket FOREIGN KEY (ticket_id) REFERENCES Ticket(ticket_id),
+    CONSTRAINT chk_refund_amount CHECK (amount > 0)
+);
 
-*   **Table: `Payment`, `Extension`, `Refund`**
-    *   **Purpose:** These are all financial event tables.
-    *   **Attributes:** `payment_id` (PK), `payment_date`, `amount`, `payment_method`, `booking_id` (FK). (Similar structure for `Extension` and `Refund`, but they would link to `ticket_id`).
+CREATE TABLE Extension (
+    extension_id      NUMBER(10) NOT NULL,
+    extension_date    DATE NOT NULL,
+    amount            NUMBER(10, 2) NOT NULL,
+    extension_method  VARCHAR2(50) NOT NULL,
+    ticket_id         NUMBER(10) NOT NULL UNIQUE,
+    CONSTRAINT pk_extension PRIMARY KEY (extension_id),
+    CONSTRAINT fk_extension_ticket FOREIGN KEY (ticket_id) REFERENCES Ticket(ticket_id),
+    CONSTRAINT chk_extension_amount CHECK (amount > 0)
+);
 
-*   **Bridge Table: `BookingDetails`**
-    *   **Purpose:** To resolve the many-to-many link between a `Booking` and the `Tickets` it contains.
-    *   **Attributes:** `booking_id` (PK, FK), `ticket_id` (PK, FK).
+CREATE TABLE Booking (
+    booking_id      NUMBER(10) NOT NULL,
+    booking_date    DATE DEFAULT SYSDATE NOT NULL,
+    total_amount    NUMBER(10, 2) NOT NULL,
+    member_id       NUMBER(10) NOT NULL,
+    payment_id      NUMBER(10) NOT NULL UNIQUE,
+    CONSTRAINT pk_booking PRIMARY KEY (booking_id),
+    CONSTRAINT fk_booking_member FOREIGN KEY (member_id) REFERENCES Member(member_id),
+    CONSTRAINT fk_booking_payment FOREIGN KEY (payment_id) REFERENCES Payment(payment_id),
+    CONSTRAINT chk_booking_amount CHECK (total_amount >= 0)
+);
 
-*   **Bridge Table: `DriverList`**
-    *   **Purpose:** To resolve the many-to-many link between a `Schedule` and its assigned `Drivers`.
-    *   **Attributes:** `schedule_id` (PK, FK), `driver_id` (PK, FK), `assignment_notes` (e.g., 'First leg').
+CREATE TABLE BookingDetails (
+    booking_id  NUMBER(10) NOT NULL,
+    ticket_id   NUMBER(10) NOT NULL,
+    CONSTRAINT pk_bookingdetails PRIMARY KEY (booking_id, ticket_id),
+    CONSTRAINT fk_bd_booking FOREIGN KEY (booking_id) REFERENCES Booking(booking_id),
+    CONSTRAINT fk_bd_ticket FOREIGN KEY (ticket_id) REFERENCES Ticket(ticket_id)
+);
 
-*   **Transaction/Bridge Table: `ServiceDetails`**
-    *   **Purpose:** This is the maintenance log. It links a `Service` type to a `Bus` for a specific event.
-    *   **Attributes:** `service_transaction_id` (PK), `service_date`, `actual_cost`, `remarks`, `service_id` (FK), `bus_id` (FK).
+CREATE TABLE RentalCollection (
+    rental_id           NUMBER(10) NOT NULL,
+    rental_date         DATE NOT NULL,
+    amount              NUMBER(10, 2) NOT NULL,
+    collection_date     DATE,
+    rental_method       VARCHAR2(50),
+    remark              VARCHAR2(255),
+    shop_id             NUMBER(10) NOT NULL,
+    staff_id            NUMBER(10) NOT NULL,
+    CONSTRAINT pk_rentalcollection PRIMARY KEY (rental_id),
+    CONSTRAINT fk_rc_shop FOREIGN KEY (shop_id) REFERENCES Shop(shop_id),
+    CONSTRAINT fk_rc_staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id),
+    CONSTRAINT chk_rc_amount CHECK (amount > 0)
+);
 
----
+CREATE TABLE ServiceDetails (
+    service_transaction_id  NUMBER(10) NOT NULL,
+    service_date            DATE NOT NULL,
+    actual_cost             NUMBER(10, 2) NOT NULL,
+    remarks                 VARCHAR2(255),
+    service_id              NUMBER(10) NOT NULL,
+    bus_id                  NUMBER(10) NOT NULL,
+    CONSTRAINT pk_servicedetails PRIMARY KEY (service_transaction_id),
+    CONSTRAINT fk_sd_service FOREIGN KEY (service_id) REFERENCES Service(service_id),
+    CONSTRAINT fk_sd_bus FOREIGN KEY (bus_id) REFERENCES Bus(bus_id)
+);
 
-### **3. Relationships (The Foreign Keys)**
-
-This is the most critical part for drawing your ERD. It shows exactly how the tables connect.
-
-| "Child" Table (Has the Foreign Key) | Foreign Key Column | "Parent" Table (Has the Primary Key) | Relationship Explained |
-| :--- | :--- | :--- | :--- |
-| **Booking** | `member_id` | `Member` | One **Member** can make many **Bookings**. |
-| **Payment** | `booking_id` | `Booking` | One **Booking** has one **Payment**. |
-| **BookingDetails** | `booking_id` | `Booking` | Links **Booking** to **Ticket** (M:N). |
-| **BookingDetails** | `ticket_id` | `Ticket` | Links **Ticket** to **Booking** (M:N). |
-| **Ticket** | `schedule_id` | `Schedule` | Many **Tickets** can be for one **Schedule**. |
-| **Schedule** | `bus_id` | `Bus` | One **Bus** can operate many **Schedules**. |
-| **Bus** | `company_id` | `Company` | One **Company** owns many **Buses**. |
-| **DriverList** | `schedule_id` | `Schedule` | Links **Schedule** to **Driver** (M:N). |
-| **DriverList** | `driver_id` | `Driver` | Links **Driver** to **Schedule** (M:N). |
-| **ServiceDetails** | `service_id` | `Service` | One **Service** type can be logged many times. |
-| **ServiceDetails** | `bus_id` | `Bus` | One **Bus** has many **ServiceDetails** logs. |
-| **StaffAllocation** | `staff_id` | `Staff` | Links **Staff** to **Schedule** (M:N, *if you build this*).|
-| **RentalCollection**| `shop_id` | `Shop` | One **Shop** has many **RentalCollections**. |
+CREATE TABLE StaffAllocation (
+    service_transaction_id  NUMBER(10) NOT NULL,
+    staff_id                NUMBER(10) NOT NULL,
+    role                    VARCHAR2(100) NOT NULL,
+    start_time              DATE,
+    end_time                DATE,
+    CONSTRAINT pk_staffallocation PRIMARY KEY (service_transaction_id, staff_id),
+    CONSTRAINT fk_sa_servicedetails FOREIGN KEY (service_transaction_id) REFERENCES ServiceDetails(service_transaction_id),
+    CONSTRAINT fk_sa_staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
+);
