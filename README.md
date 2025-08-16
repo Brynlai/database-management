@@ -1,9 +1,3 @@
-Of course. A well-structured `README.md` is the front door to any project. It should provide a clear, high-level overview and a map for navigating the technical details. Here is a professional README tailored for your assignment.
-
-You can save this content in a file named `README.md` in the root directory of your project.
-
----
-
 # Bus Station Management System
 
 ## 1. Project Overview
