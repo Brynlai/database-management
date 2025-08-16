@@ -1,237 +1,145 @@
---=============================================================================
--- Sequences for Primary Key Generation
---=============================================================================
-CREATE SEQUENCE company_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE bus_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE schedule_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE driver_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE staff_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE shop_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE rental_collection_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE service_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE service_details_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE campaign_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE promotion_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE member_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE payment_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE booking_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE ticket_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE refund_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE extension_seq START WITH 1 INCREMENT BY 1;
+Of course. A well-structured `README.md` is the front door to any project. It should provide a clear, high-level overview and a map for navigating the technical details. Here is a professional README tailored for your assignment.
 
---=============================================================================
--- Table Creation Script
---=============================================================================
+You can save this content in a file named `README.md` in the root directory of your project.
 
-CREATE TABLE Company (
-    company_id      NUMBER(10) NOT NULL,
-    name            VARCHAR2(100) NOT NULL,
-    CONSTRAINT pk_company PRIMARY KEY (company_id)
-);
+---
 
-CREATE TABLE Bus (
-    bus_id          NUMBER(10) NOT NULL,
-    plate_number    VARCHAR2(20) NOT NULL UNIQUE,
-    capacity        NUMBER(3) NOT NULL,
-    company_id      NUMBER(10) NOT NULL,
-    CONSTRAINT pk_bus PRIMARY KEY (bus_id),
-    CONSTRAINT fk_bus_company FOREIGN KEY (company_id) REFERENCES Company(company_id),
-    CONSTRAINT chk_bus_capacity CHECK (capacity > 0)
-);
+# Bus Station Management System
 
-CREATE TABLE Driver (
-    driver_id       NUMBER(10) NOT NULL,
-    name            VARCHAR2(100) NOT NULL,
-    license_no      VARCHAR2(50) NOT NULL UNIQUE,
-    CONSTRAINT pk_driver PRIMARY KEY (driver_id)
-);
+## 1. Project Overview
 
-CREATE TABLE Staff (
-    staff_id            NUMBER(10) NOT NULL,
-    name                VARCHAR2(100) NOT NULL,
-    role                VARCHAR2(50) NOT NULL,
-    email               VARCHAR2(100) NOT NULL UNIQUE,
-    contact_no          VARCHAR2(20) NOT NULL,
-    employment_date     DATE NOT NULL,
-    status              VARCHAR2(20) NOT NULL,
-    CONSTRAINT pk_staff PRIMARY KEY (staff_id),
-    CONSTRAINT chk_staff_role CHECK (role IN ('Counter Staff', 'Cleaner', 'Manager', 'Technician')),
-    CONSTRAINT chk_staff_status CHECK (status IN ('Active', 'Resigned', 'On Leave'))
-);
+This project is a comprehensive implementation of a relational database system for a Bus Station Management System, designed as part of a university database curriculum. The system is built on **Oracle 11g** and leverages **SQL** and **PL/SQL** to model, manage, and enforce complex business rules.
 
-CREATE TABLE Shop (
-    shop_id         NUMBER(10) NOT NULL,
-    shop_name       VARCHAR2(100) NOT NULL,
-    location_code   VARCHAR2(20) NOT NULL UNIQUE,
-    CONSTRAINT pk_shop PRIMARY KEY (shop_id)
-);
+The core objective is to create a robust, reliable, and scalable database foundation that handles all primary operations of a modern bus terminal, from customer-facing activities like ticket booking and promotions to internal operations like staff, fleet, and facilities management. The design prioritizes data integrity, normalization (3rd Normal Form), and clear separation of concerns.
 
-CREATE TABLE Service (
-    service_id      NUMBER(10) NOT NULL,
-    service_name    VARCHAR2(100) NOT NULL,
-    standard_cost   NUMBER(10, 2) NOT NULL,
-    CONSTRAINT pk_service PRIMARY KEY (service_id),
-    CONSTRAINT chk_service_cost CHECK (standard_cost >= 0)
-);
+---
 
-CREATE TABLE Member (
-    member_id           NUMBER(10) NOT NULL,
-    name                VARCHAR2(100) NOT NULL,
-    email               VARCHAR2(100) NOT NULL UNIQUE,
-    contact_no          VARCHAR2(20) NOT NULL,
-    registration_date   DATE DEFAULT SYSDATE NOT NULL,
-    CONSTRAINT pk_member PRIMARY KEY (member_id)
-);
+## 2. Core Modules & Features
 
-CREATE TABLE Payment (
-    payment_id      NUMBER(10) NOT NULL,
-    payment_date    DATE DEFAULT SYSDATE NOT NULL,
-    amount          NUMBER(10, 2) NOT NULL,
-    payment_method  VARCHAR2(50) NOT NULL,
-    CONSTRAINT pk_payment PRIMARY KEY (payment_id),
-    CONSTRAINT chk_payment_amount CHECK (amount > 0),
-    CONSTRAINT chk_payment_method CHECK (payment_method IN ('Credit Card', 'Debit Card', 'Online Banking', 'E-Wallet'))
-);
+The system is designed to support the following mandatory business functionalities:
 
-CREATE TABLE Campaign (
-    campaign_id     NUMBER(10) NOT NULL,
-    campaign_name   VARCHAR2(100) NOT NULL,
-    start_date      DATE NOT NULL,
-    end_date        DATE NOT NULL,
-    CONSTRAINT pk_campaign PRIMARY KEY (campaign_id),
-    CONSTRAINT chk_campaign_dates CHECK (end_date >= start_date)
-);
+*   **Member Management**: Handles member registration, including a one-time registration fee.
+*   **Online Booking System**: Allows members to search for schedules and purchase/book tickets online.
+*   **Ticket Lifecycle Management**:
+    *   **Cancellation**: Allows cancellation of a ticket up to 2 days in advance with a 70% refund.
+    *   **Extension**: Allows extension of a ticket up to 2 days in advance with a nominal fee.
+    *   **Full Refund**: Manages full refunds for bus schedules cancelled by the company.
+*   **Operational Management**: Provides tools to manage:
+    *   Staff (counter staff, cleaners, etc.)
+    *   Shops and Rentals (food court, shop lots)
+    *   Bus Fleet and Companies
+    *   Drivers and Assignments
+    *   Schedules and Platform Allocations
+*   **Bus Maintenance**: Tracks services performed on buses, such as maintenance, repairs, and washing.
+*   **Advanced Search**: Enables users to query bus schedules using multiple criteria (e.g., destination, price, time, company).
+*   **Promotions Engine**: Manages marketing campaigns and applies various promotional discounts to tickets.
 
-CREATE TABLE Schedule (
-    schedule_id         NUMBER(10) NOT NULL,
-    departure_time      DATE NOT NULL,
-    arrival_time        DATE NOT NULL,
-    base_price          NUMBER(10, 2) NOT NULL,
-    origin_station      VARCHAR2(100) NOT NULL,
-    destination_station VARCHAR2(100) NOT NULL,
-    platform_no         VARCHAR2(10),
-    bus_id              NUMBER(10) NOT NULL,
-    CONSTRAINT pk_schedule PRIMARY KEY (schedule_id),
-    CONSTRAINT fk_schedule_bus FOREIGN KEY (bus_id) REFERENCES Bus(bus_id),
-    CONSTRAINT chk_schedule_times CHECK (arrival_time > departure_time),
-    CONSTRAINT chk_schedule_price CHECK (base_price > 0)
-);
+---
 
-CREATE TABLE DriverList (
-    schedule_id         NUMBER(10) NOT NULL,
-    driver_id           NUMBER(10) NOT NULL,
-    assignment_notes    VARCHAR2(255),
-    CONSTRAINT pk_driverlist PRIMARY KEY (schedule_id, driver_id),
-    CONSTRAINT fk_driverlist_schedule FOREIGN KEY (schedule_id) REFERENCES Schedule(schedule_id),
-    CONSTRAINT fk_driverlist_driver FOREIGN KEY (driver_id) REFERENCES Driver(driver_id)
-);
+## 3. Database Schema
 
-CREATE TABLE Promotion (
-    promotion_id    NUMBER(10) NOT NULL,
-    promotion_name  VARCHAR2(100) NOT NULL,
-    description     VARCHAR2(255),
-    discount_type   VARCHAR2(20) NOT NULL,
-    discount_value  NUMBER(10, 2) NOT NULL,
-    applies_to      VARCHAR2(50),
-    valid_from      DATE NOT NULL,
-    valid_until     DATE NOT NULL,
-    condition       VARCHAR2(255),
-    campaign_id     NUMBER(10) NOT NULL,
-    CONSTRAINT pk_promotion PRIMARY KEY (promotion_id),
-    CONSTRAINT fk_promotion_campaign FOREIGN KEY (campaign_id) REFERENCES Campaign(campaign_id),
-    CONSTRAINT chk_promo_dates CHECK (valid_until >= valid_from),
-    CONSTRAINT chk_promo_discount_type CHECK (discount_type IN ('Percentage', 'Fixed Amount')),
-    CONSTRAINT chk_promo_discount_value CHECK (discount_value > 0)
-);
+The database schema is the architectural blueprint of the system. It is designed in 3rd Normal Form to reduce data redundancy and improve data integrity. All relationships are explicitly enforced using primary and foreign key constraints.
 
-CREATE TABLE Ticket (
-    ticket_id       NUMBER(10) NOT NULL,
-    seat_number     VARCHAR2(10) NOT NULL,
-    status          VARCHAR2(20) NOT NULL,
-    schedule_id     NUMBER(10) NOT NULL,
-    promotion_id    NUMBER(10),
-    CONSTRAINT pk_ticket PRIMARY KEY (ticket_id),
-    CONSTRAINT fk_ticket_schedule FOREIGN KEY (schedule_id) REFERENCES Schedule(schedule_id),
-    CONSTRAINT fk_ticket_promotion FOREIGN KEY (promotion_id) REFERENCES Promotion(promotion_id),
-    CONSTRAINT chk_ticket_status CHECK (status IN ('Available', 'Booked', 'Cancelled', 'Extended'))
-);
+The diagram below illustrates the high-level relationships between the core entities of the system.
 
-CREATE TABLE Refund (
-    refund_id       NUMBER(10) NOT NULL,
-    refund_date     DATE NOT NULL,
-    amount          NUMBER(10, 2) NOT NULL,
-    refund_method   VARCHAR2(50) NOT NULL,
-    ticket_id       NUMBER(10) NOT NULL UNIQUE,
-    CONSTRAINT pk_refund PRIMARY KEY (refund_id),
-    CONSTRAINT fk_refund_ticket FOREIGN KEY (ticket_id) REFERENCES Ticket(ticket_id),
-    CONSTRAINT chk_refund_amount CHECK (amount > 0)
-);
+```mermaid
+graph TD
+    subgraph Core_Operations
+        Company --> Bus
+        Bus --> Schedule
+        Driver --> DriverList
+        Schedule --> DriverList
+    end
 
-CREATE TABLE Extension (
-    extension_id      NUMBER(10) NOT NULL,
-    extension_date    DATE NOT NULL,
-    amount            NUMBER(10, 2) NOT NULL,
-    extension_method  VARCHAR2(50) NOT NULL,
-    ticket_id         NUMBER(10) NOT NULL UNIQUE,
-    CONSTRAINT pk_extension PRIMARY KEY (extension_id),
-    CONSTRAINT fk_extension_ticket FOREIGN KEY (ticket_id) REFERENCES Ticket(ticket_id),
-    CONSTRAINT chk_extension_amount CHECK (amount > 0)
-);
+    subgraph Customer_Booking_Flow
+        Member --> Booking
+        Payment --> Booking
+        Booking --> BookingDetails
+        Schedule --> Ticket
+        Ticket --> BookingDetails
+        Promotion --> Ticket
+    end
 
-CREATE TABLE Booking (
-    booking_id      NUMBER(10) NOT NULL,
-    booking_date    DATE DEFAULT SYSDATE NOT NULL,
-    total_amount    NUMBER(10, 2) NOT NULL,
-    member_id       NUMBER(10) NOT NULL,
-    payment_id      NUMBER(10) NOT NULL UNIQUE,
-    CONSTRAINT pk_booking PRIMARY KEY (booking_id),
-    CONSTRAINT fk_booking_member FOREIGN KEY (member_id) REFERENCES Member(member_id),
-    CONSTRAINT fk_booking_payment FOREIGN KEY (payment_id) REFERENCES Payment(payment_id),
-    CONSTRAINT chk_booking_amount CHECK (total_amount >= 0)
-);
+    subgraph Post_Sale_Actions
+        Ticket --> Refund
+        Ticket --> Extension
+    end
 
-CREATE TABLE BookingDetails (
-    booking_id  NUMBER(10) NOT NULL,
-    ticket_id   NUMBER(10) NOT NULL,
-    CONSTRAINT pk_bookingdetails PRIMARY KEY (booking_id, ticket_id),
-    CONSTRAINT fk_bd_booking FOREIGN KEY (booking_id) REFERENCES Booking(booking_id),
-    CONSTRAINT fk_bd_ticket FOREIGN KEY (ticket_id) REFERENCES Ticket(ticket_id)
-);
+    subgraph Promotions
+        Campaign --> Promotion
+    end
 
-CREATE TABLE RentalCollection (
-    rental_id           NUMBER(10) NOT NULL,
-    rental_date         DATE NOT NULL,
-    amount              NUMBER(10, 2) NOT NULL,
-    collection_date     DATE,
-    rental_method       VARCHAR2(50),
-    remark              VARCHAR2(255),
-    shop_id             NUMBER(10) NOT NULL,
-    staff_id            NUMBER(10) NOT NULL,
-    CONSTRAINT pk_rentalcollection PRIMARY KEY (rental_id),
-    CONSTRAINT fk_rc_shop FOREIGN KEY (shop_id) REFERENCES Shop(shop_id),
-    CONSTRAINT fk_rc_staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id),
-    CONSTRAINT chk_rc_amount CHECK (amount > 0)
-);
+    subgraph Internal_Management
+        Shop --> RentalCollection
+        Staff --> RentalCollection
+        Bus --> ServiceDetails
+        Service --> ServiceDetails
+        ServiceDetails --> StaffAllocation
+        Staff --> StaffAllocation
+    end
+```
 
-CREATE TABLE ServiceDetails (
-    service_transaction_id  NUMBER(10) NOT NULL,
-    service_date            DATE NOT NULL,
-    actual_cost             NUMBER(10, 2) NOT NULL,
-    remarks                 VARCHAR2(255),
-    service_id              NUMBER(10) NOT NULL,
-    bus_id                  NUMBER(10) NOT NULL,
-    CONSTRAINT pk_servicedetails PRIMARY KEY (service_transaction_id),
-    CONSTRAINT fk_sd_service FOREIGN KEY (service_id) REFERENCES Service(service_id),
-    CONSTRAINT fk_sd_bus FOREIGN KEY (bus_id) REFERENCES Bus(bus_id)
-);
+---
 
-CREATE TABLE StaffAllocation (
-    service_transaction_id  NUMBER(10) NOT NULL,
-    staff_id                NUMBER(10) NOT NULL,
-    role                    VARCHAR2(100) NOT NULL,
-    start_time              DATE,
-    end_time                DATE,
-    CONSTRAINT pk_staffallocation PRIMARY KEY (service_transaction_id, staff_id),
-    CONSTRAINT fk_sa_servicedetails FOREIGN KEY (service_transaction_id) REFERENCES ServiceDetails(service_transaction_id),
-    CONSTRAINT fk_sa_staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
-);
+## 4. Technology Stack
+
+*   **Database**: Oracle Database 11g
+*   **Language**: SQL, PL/SQL
+
+---
+
+## 5. Project Structure
+
+The project files are organized into a logical directory structure to separate concerns and improve maintainability.
+
+```
+.
+├── DDL/
+│   ├── 01_create_sequences.sql
+│   └── 02_create_tables.sql
+├── DML/
+│   └── populate_data.sql
+├── PLSQL/
+│   ├── procedures/
+│   ├── triggers/
+│   ├── views/
+│   └── reports/
+├── QUERIES/
+│   ├── operational_queries.sql
+│   └── analytical_queries.sql
+└── README.md
+```
+
+*   **DDL/**: Contains Data Definition Language scripts for creating the database schema.
+*   **DML/**: Contains Data Manipulation Language scripts for populating the database with sample records.
+*   **PLSQL/**: Contains all PL/SQL code, organized by object type (procedures, triggers, views, report generation logic).
+*   **QUERIES/**: Contains SQL queries designed to extract relevant information for decision-making.
+
+---
+
+## 6. Setup and Execution
+
+To create and populate the database, execute the scripts in the following sequence using an Oracle SQL client (like SQL*Plus or SQL Developer):
+
+1.  **Create Schema Objects**: Run the DDL scripts to build the database structure.
+    ```bash
+    sqlplus username/password@oracle_sid @DDL/01_create_sequences.sql
+    sqlplus username/password@oracle_sid @DDL/02_create_tables.sql
+    ```
+
+2.  **Populate Data**: Run the DML script to insert the sample data.
+    ```bash
+    sqlplus username/password@oracle_sid @DML/populate_data.sql
+    ```
+
+3.  **Compile PL/SQL Code**: Compile all procedures, triggers, and views. It is recommended to compile views first, followed by procedures, and finally triggers.
+    ```bash
+    # Example for compiling a procedure
+    sqlplus username/password@oracle_sid @PLSQL/procedures/your_procedure_name.sql
+    ```
+
+---
+
+## 7. Author
+
+*   **[Your Name]** - [Your Student ID]
