@@ -64,10 +64,23 @@ JOIN Company c ON b.company_id = c.company_id;
 
 COMMENT ON TABLE V_BUS_SCHEDULE_DETAILS IS 'A simplified view joining schedule, bus, and company details, ideal for searching and displaying trip information.';
 
-
 --=============================================================================
 -- Section 2: Analytical Queries for Management
 --=============================================================================
+
+PROMPT Creating View: V_STAFF_SERVICE_WORK
+CREATE OR REPLACE VIEW V_STAFF_SERVICE_WORK AS
+SELECT
+    st.staff_id,
+    st.role,
+    st.name,
+    sa.service_transaction_id,
+    sd.actual_cost
+FROM Staff st
+JOIN StaffAllocation sa ON st.staff_id = sa.staff_id
+JOIN ServiceDetails sd ON sa.service_transaction_id = sd.service_transaction_id;
+
+COMMENT ON TABLE V_STAFF_SERVICE_WORK IS 'View mapping staff to their service tasks and costs, used for operational performance reporting.';
 
 --=============================================================================
 -- Query 1: Monthly Revenue Summary by Bus Company (Strategic Level)
@@ -80,7 +93,7 @@ PROMPT Running Query: Monthly Revenue by Company (Formatted Report)
 
 -- Setup for the report format
 SET LINESIZE 100
-SET PAGESIZE 50
+SET PAGESIZE 200
 TTITLE CENTER 'Monthly Revenue Report by Bus Company' SKIP 2
 
 -- Define column formats for clean output
@@ -95,20 +108,15 @@ COMPUTE SUM OF total_revenue ON booking_month
 
 -- The actual query
 SELECT
-    TO_CHAR(b.booking_date, 'YYYY-MM') AS booking_month,
-    c.name AS company_name,
-    SUM(s.base_price) AS total_revenue,
-    COUNT(t.ticket_id) AS ticket_count
-FROM Ticket t
-JOIN BookingDetails bd ON t.ticket_id = bd.ticket_id
-JOIN Booking b ON bd.booking_id = b.booking_id
-JOIN Schedule s ON t.schedule_id = s.schedule_id
-JOIN Bus bu ON s.bus_id = bu.bus_id
-JOIN Company c ON bu.company_id = c.company_id
-WHERE t.status = 'Booked'
+    TO_CHAR(vb.booking_date, 'YYYY-MM') AS booking_month,
+    vb.company_name,
+    SUM(vb.base_price) AS total_revenue,
+    COUNT(vb.ticket_id) AS ticket_count
+FROM V_BOOKING_DETAILS vb
+WHERE vb.ticket_status = 'Booked'
 GROUP BY
-    TO_CHAR(b.booking_date, 'YYYY-MM'),
-    c.name
+    TO_CHAR(vb.booking_date, 'YYYY-MM'),
+    vb.company_name
 ORDER BY
     booking_month DESC,
     total_revenue DESC;
@@ -131,7 +139,7 @@ PROMPT Running Query: Staff Service Performance (Formatted Report)
 
 -- Setup for the report format
 SET LINESIZE 120
-SET PAGESIZE 50
+SET PAGESIZE 200
 TTITLE CENTER 'Staff Service Performance Report' SKIP 2
 
 -- Define column formats for clean output
@@ -145,20 +153,18 @@ BREAK ON staff_role SKIP 1
 
 -- The actual query
 SELECT
-    st.role AS staff_role,
-    st.name AS staff_name,
-    COUNT(sa.service_transaction_id) AS tasks_completed,
-    SUM(sd.actual_cost) AS total_service_cost
-FROM Staff st
-JOIN StaffAllocation sa ON st.staff_id = sa.staff_id
-JOIN ServiceDetails sd ON sa.service_transaction_id = sd.service_transaction_id
-WHERE st.role IN ('Technician', 'Cleaner')
+    v.role AS staff_role,
+    v.name AS staff_name,
+    COUNT(v.service_transaction_id) AS tasks_completed,
+    SUM(v.actual_cost) AS total_service_cost
+FROM V_STAFF_SERVICE_WORK v
+WHERE v.role IN ('Technician', 'Cleaner')
 GROUP BY
-    st.role,
-    st.staff_id,
-    st.name
+    v.role,
+    v.staff_id,
+    v.name
 ORDER BY
-    st.role, -- Order by the break column first
+    v.role,
     tasks_completed DESC;
 
 -- Clean up formatting settings to not affect subsequent queries

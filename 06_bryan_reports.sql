@@ -16,21 +16,30 @@ CREATE OR REPLACE PROCEDURE rpt_campaign_performance (
     p_year IN NUMBER
 )
 AS
-    -- This cursor will fetch all campaigns that were active in the given year.
+    -- Outer cursor: campaigns in the requested year
     CURSOR campaign_cursor IS
         SELECT
-            campaign_id,
-            campaign_name,
-            start_date,
-            end_date
-        FROM Campaign
-        WHERE EXTRACT(YEAR FROM start_date) = p_year
-           OR EXTRACT(YEAR FROM end_date) = p_year
-        ORDER BY start_date;
+            c.campaign_id,
+            c.campaign_name,
+            c.start_date,
+            c.end_date
+        FROM Campaign c
+        WHERE EXTRACT(YEAR FROM c.start_date) = p_year
+           OR EXTRACT(YEAR FROM c.end_date) = p_year
+        ORDER BY c.start_date;
 
-    v_promo_count       NUMBER;
-    v_tickets_sold      NUMBER;
-    v_total_revenue     NUMBER(12, 2);
+    -- Inner cursor: aggregated stats per campaign derived from bookings view
+    CURSOR campaign_stats_cursor (cp_campaign_id IN Campaign.campaign_id%TYPE) IS
+        SELECT
+            COUNT(DISTINCT p.promotion_id) AS promo_count,
+            COUNT(vb.ticket_id) AS tickets_sold,
+            NVL(SUM(vb.base_price), 0) AS total_revenue
+        FROM Promotion p
+        LEFT JOIN V_BOOKING_DETAILS vb
+               ON vb.promotion_id = p.promotion_id
+              AND vb.ticket_status = 'Booked'
+        WHERE p.campaign_id = cp_campaign_id;
+
     v_report_generated  BOOLEAN := FALSE;
 
 BEGIN
@@ -46,33 +55,18 @@ BEGIN
     );
     DBMS_OUTPUT.PUT_LINE(RPAD('-', 120, '-'));
 
-    -- Loop through each campaign found by the cursor
+    -- Loop through each campaign and fetch nested aggregated stats
     FOR campaign_rec IN campaign_cursor LOOP
         v_report_generated := TRUE;
 
-        -- 1. Count the number of promotions for this campaign
-        SELECT COUNT(*)
-        INTO v_promo_count
-        FROM Promotion
-        WHERE campaign_id = campaign_rec.campaign_id;
-
-        -- 2. Calculate tickets sold and revenue for this campaign's promotions
-        SELECT
-            COALESCE(COUNT(t.ticket_id), 0),
-            COALESCE(SUM(s.base_price), 0)
-        INTO v_tickets_sold, v_total_revenue
-        FROM Ticket t
-        JOIN Schedule s ON t.schedule_id = s.schedule_id
-        WHERE t.promotion_id IN (SELECT promotion_id FROM Promotion WHERE campaign_id = campaign_rec.campaign_id)
-          AND t.status = 'Booked';
-
-        -- Print the formatted row for this campaign
-        DBMS_OUTPUT.PUT_LINE(
-            RPAD(SUBSTR(campaign_rec.campaign_name, 1, 38), 40) ||
-            RPAD(TO_CHAR(v_promo_count, '999,990'), 15) ||
-            RPAD(TO_CHAR(v_tickets_sold, '999,990'), 15) ||
-            TO_CHAR(v_total_revenue, '999,999,990.00')
-        );
+        FOR stats_rec IN campaign_stats_cursor(campaign_rec.campaign_id) LOOP
+            DBMS_OUTPUT.PUT_LINE(
+                RPAD(SUBSTR(campaign_rec.campaign_name, 1, 38), 40) ||
+                RPAD(TO_CHAR(NVL(stats_rec.promo_count, 0), '999,990'), 15) ||
+                RPAD(TO_CHAR(NVL(stats_rec.tickets_sold, 0), '999,990'), 15) ||
+                TO_CHAR(NVL(stats_rec.total_revenue, 0), '999,999,990.00')
+            );
+        END LOOP;
 
     END LOOP;
 
