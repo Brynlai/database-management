@@ -1,9 +1,7 @@
 --=============================================================================
 -- File: 02a_sync_sequences.sql
 --=============================================================================
--- Purpose: Resets all sequences to start above the maximum existing PK value
---          in their respective tables. This is a critical step to run after
---          the initial data population from '02_populate_data.sql'.
+-- Sequence still starts at 1, but after inserting example 10 rows, 1 already used, so need to reset to use max_value + 1 for primary key value.
 --=============================================================================
 
 SET SERVEROUTPUT ON;

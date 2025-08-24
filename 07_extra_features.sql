@@ -5,12 +5,6 @@
 --          that support the overall system.
 --=============================================================================
 
---=============================================================================
--- Section 1: Performance Indexes
---=============================================================================
--- Indexes are created on foreign key columns and other frequently queried
--- columns to significantly speed up join operations and WHERE clause lookups.
-
 PROMPT Creating indexes for performance...
 
 -- Index for Booking table

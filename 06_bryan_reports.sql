@@ -8,11 +8,11 @@
 SET SERVEROUTPUT ON;
 
 --=============================================================================
--- Section 1: Financial and Marketing Reports (Your Tasks)
+-- Section 1: Financial and Marketing Reports
 --=============================================================================
 
 PROMPT Creating Report Procedure: rpt_campaign_performance
-CREATE OR REPLACE PROCEDURE rpt_campaign_performance ( -- RENAMED to be <= 30 chars
+CREATE OR REPLACE PROCEDURE rpt_campaign_performance (
     p_year IN NUMBER
 )
 AS
@@ -90,8 +90,6 @@ END rpt_campaign_performance;
 /
 
 
--- Appending to 06_reports.sql
-
 PROMPT Creating Report Procedure: rpt_bus_maintenance_history
 CREATE OR REPLACE PROCEDURE rpt_bus_maintenance_history (
     p_bus_id IN Bus.bus_id%TYPE
@@ -100,7 +98,7 @@ AS
     -- Outer cursor: Fetches the primary record (the bus).
     CURSOR bus_cursor IS
         SELECT
-            b.bus_id, -- <<< FIX: ADDED bus_id HERE
+            b.bus_id,
             b.plate_number,
             c.name as company_name
         FROM Bus b

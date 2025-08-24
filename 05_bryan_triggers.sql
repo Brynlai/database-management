@@ -8,7 +8,7 @@
 SET SERVEROUTPUT ON;
 
 --=============================================================================
--- Section 1: Audit Triggers (Your Tasks)
+-- Section 1: Audit Triggers
 --=============================================================================
 
 PROMPT Creating sequence and table for audit logs...
@@ -30,7 +30,6 @@ CREATE TABLE Staff_Audit_Log (
 
 COMMENT ON TABLE Staff_Audit_Log IS 'Logs changes to the role or status of records in the Staff table.';
 
--- Appending to 05_triggers.sql
 
 PROMPT Creating Trigger: trg_audit_staff_changes
 CREATE OR REPLACE TRIGGER trg_audit_staff_changes
