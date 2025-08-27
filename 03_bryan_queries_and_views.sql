@@ -5,6 +5,16 @@
 --          examples of complex analytical queries for management.
 --=============================================================================
 
+
+
+
+
+
+
+
+
+
+
 --=============================================================================
 -- Section 1: Foundational Views
 --=============================================================================
@@ -64,6 +74,7 @@ JOIN Company c ON b.company_id = c.company_id;
 
 COMMENT ON TABLE V_BUS_SCHEDULE_DETAILS IS 'A simplified view joining schedule, bus, and company details, ideal for searching and displaying trip information.';
 
+
 --=============================================================================
 -- Section 2: Analytical Queries for Management
 --=============================================================================
@@ -81,6 +92,17 @@ JOIN StaffAllocation sa ON st.staff_id = sa.staff_id
 JOIN ServiceDetails sd ON sa.service_transaction_id = sd.service_transaction_id;
 
 COMMENT ON TABLE V_STAFF_SERVICE_WORK IS 'View mapping staff to their service tasks and costs, used for operational performance reporting.';
+
+
+
+
+
+
+
+
+
+
+
 
 --=============================================================================
 -- Query 1: Monthly Revenue Summary by Bus Company (Strategic Level)
@@ -104,7 +126,7 @@ COLUMN ticket_count  FORMAT 999,999 HEADING 'Tickets Sold'
 
 -- Group the report by month and compute monthly subtotals
 BREAK ON booking_month SKIP 1
-COMPUTE SUM OF total_revenue ON booking_month
+COMPUTE SUM LABEL 'Total:' OF total_revenue ON booking_month
 
 -- The actual query
 SELECT
@@ -126,6 +148,21 @@ CLEAR COLUMNS;
 CLEAR BREAKS;
 CLEAR COMPUTES;
 TTITLE OFF;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 --=============================================================================
 -- Query 2: Staff Performance on Service Tasks (Operational Level)

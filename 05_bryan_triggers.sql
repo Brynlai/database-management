@@ -31,7 +31,24 @@ CREATE TABLE Staff_Audit_Log (
 COMMENT ON TABLE Staff_Audit_Log IS 'Logs changes to the role or status of records in the Staff table.';
 
 
-PROMPT Creating Trigger: trg_audit_staff_changes
+
+
+
+
+
+
+
+
+
+
+
+
+--=============================================================================
+-- Trigger 1: Staff Change Auditing (Operational Level)
+--=============================================================================
+-- Purpose: Creates a permanent audit record of any changes to a staff member's
+--          role or status for security and accountability.
+
 CREATE OR REPLACE TRIGGER trg_audit_staff_changes
 AFTER UPDATE OF role, status ON Staff
 FOR EACH ROW
@@ -66,13 +83,24 @@ END;
 
 
 
--- Appending to 05_triggers.sql
+
+
+
+
+
+
+
+
+
+
+
 
 --=============================================================================
--- Section 2: Data Integrity Triggers (Your Tasks)
+-- Trigger 2: Prevent Orphaned Bus Records (Data Integrity)
 --=============================================================================
+-- Purpose: Protects data integrity by blocking the deletion of any bus company
+--          that still owns active buses in the system.
 
-PROMPT Creating Trigger: trg_prevent_company_deletion
 CREATE OR REPLACE TRIGGER trg_prevent_company_deletion
 BEFORE DELETE ON Company
 FOR EACH ROW

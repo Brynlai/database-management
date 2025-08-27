@@ -10,8 +10,8 @@ SET SERVEROUTPUT ON;
 --=============================================================================
 -- Section 1: Administrative Procedures
 --=============================================================================
+-- Purpose: Error handling to prevent duplication of staff records based on their email address, ensureing data integrity.
 
-PROMPT Creating Procedure: Add_New_Staff
 CREATE OR REPLACE PROCEDURE Add_New_Staff (
     p_name          IN Staff.name%TYPE,
     p_role          IN Staff.role%TYPE,
@@ -55,7 +55,12 @@ EXCEPTION
 END Add_New_Staff;
 /
 
-PROMPT Creating Procedure: Assign_Driver_To_Schedule
+
+--=============================================================================
+-- Procedure 2: Assign Driver to Schedule (Operational Level)
+--=============================================================================
+-- Purpose: Before assignment, verify both driver and schedule exist.
+
 CREATE OR REPLACE PROCEDURE Assign_Driver_To_Schedule (
     p_schedule_id   IN Schedule.schedule_id%TYPE,
     p_driver_id     IN Driver.driver_id%TYPE,

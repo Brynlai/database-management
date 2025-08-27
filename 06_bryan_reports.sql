@@ -11,7 +11,29 @@ SET SERVEROUTPUT ON;
 -- Section 1: Financial and Marketing Reports
 --=============================================================================
 
-PROMPT Creating Report Procedure: rpt_campaign_performance
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--
+-- 4.1.7 Report 1: On-demand Summary Report of Annual Campaign Performance.
+--
+-- Purpose: To provide a strategic overview of campaign effectiveness by summarizing ticket sales and revenue
+--          generated from associated promotions for a user-specified year.
+--
+
 CREATE OR REPLACE PROCEDURE rpt_campaign_performance (
     p_year IN NUMBER
 )
@@ -84,7 +106,37 @@ END rpt_campaign_performance;
 /
 
 
-PROMPT Creating Report Procedure: rpt_bus_maintenance_history
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--
+-- 4.1.8 Report 2: On-demand Detail Report of Bus Maintenance History.
+--
+-- Purpose: To provide operational managers with a complete, chronological log of all service activities and
+--          associated costs for a specific bus to aid in maintenance tracking and cost analysis.
+--
+
 CREATE OR REPLACE PROCEDURE rpt_bus_maintenance_history (
     p_bus_id IN Bus.bus_id%TYPE
 )
