@@ -8,13 +8,13 @@
 
 SET SERVEROUTPUT ON SIZE 1000000;
 
---=============================================================================
--- TASK 4: STORED PROCEDURES DEMONSTRATION
---=============================================================================
-DBMS_OUTPUT.PUT_LINE('');
-DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
-DBMS_OUTPUT.PUT_LINE('-- Task 4: Stored Procedures Demonstration');
-DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
+-- --=============================================================================
+-- -- TASK 4: STORED PROCEDURES DEMONSTRATION
+-- --=============================================================================
+-- DBMS_OUTPUT.PUT_LINE('');
+-- DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
+-- DBMS_OUTPUT.PUT_LINE('-- Task 4: Stored Procedures Demonstration');
+-- DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
 
 
 ---
@@ -70,10 +70,10 @@ END;
 --=============================================================================
 -- TASK 5: TRIGGERS DEMONSTRATION
 --=============================================================================
-DBMS_OUTPUT.PUT_LINE('');
-DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
-DBMS_OUTPUT.PUT_LINE('-- Task 5: Triggers Demonstration');
-DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
+-- DBMS_OUTPUT.PUT_LINE('');
+-- DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
+-- DBMS_OUTPUT.PUT_LINE('-- Task 5: Triggers Demonstration');
+-- DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
 
 
 ---
@@ -111,10 +111,10 @@ END;
 --=============================================================================
 -- TASK 6: REPORTS DEMONSTRATION
 --=============================================================================
-DBMS_OUTPUT.PUT_LINE('');
-DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
-DBMS_OUTPUT.PUT_LINE('-- Task 6: Reports Demonstration');
-DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
+-- DBMS_OUTPUT.PUT_LINE('');
+-- DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
+-- DBMS_OUTPUT.PUT_LINE('-- Task 6: Reports Demonstration');
+-- DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
 
 
 ---
@@ -147,3 +147,38 @@ BEGIN
     rpt_bus_maintenance_history(p_bus_id => 99999);
 END;
 /
+
+
+--=============================================================================
+-- TASK 7: USER-DEFINED FUNCTION DEMONSTRATION
+--=============================================================================
+
+---
+--- --- Testing Function: calculate_final_ticket_price ---
+
+--- [TEST 7.1] Using the function in a query to verify a booking's total amount.
+--- We will check Booking ID 4, which may have promotions.
+
+COLUMN stored_booking_total FORMAT 99,990.00 HEADING 'Stored Total'
+COLUMN calculated_booking_total FORMAT 99,990.00 HEADING 'Calculated Total'
+COLUMN difference FORMAT 99,990.00 HEADING 'Difference'
+
+SELECT
+    b.booking_id,
+    b.total_amount AS stored_booking_total,
+    SUM(calculate_final_ticket_price(t.ticket_id)) AS calculated_booking_total,
+    b.total_amount - SUM(calculate_final_ticket_price(t.ticket_id)) AS difference
+FROM Booking b
+JOIN BookingDetails bd ON b.booking_id = bd.booking_id
+JOIN Ticket t ON bd.ticket_id = t.ticket_id
+WHERE b.booking_id = 4
+GROUP BY
+    b.booking_id,
+    b.total_amount;
+
+CLEAR COLUMNS;
+
+DBMS_OUTPUT.PUT_LINE('');
+DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
+DBMS_OUTPUT.PUT_LINE('-- Demonstration Complete');
+DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));

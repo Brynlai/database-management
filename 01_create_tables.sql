@@ -1,15 +1,28 @@
+--=============================================================================
+-- File: 01_create_tables.sql
+-- Purpose: Drops all existing database objects in the correct order to ensure
+--          a clean slate, then creates all tables and sequences.
+--=============================================================================
+
+PROMPT Dropping all existing objects...
+
+-- Drop objects in reverse order of dependency
 PROMPT Dropping views...
 DROP VIEW V_BOOKING_DETAILS;
 DROP VIEW V_BUS_SCHEDULE_DETAILS;
 DROP VIEW V_STAFF_SERVICE_WORK;
+
 PROMPT Dropping triggers...
 DROP TRIGGER trg_audit_staff_changes;
 DROP TRIGGER trg_prevent_company_deletion;
-PROMPT Dropping procedures...
+
+PROMPT Dropping procedures and functions...
 DROP PROCEDURE Add_New_Staff;
 DROP PROCEDURE Assign_Driver_To_Schedule;
 DROP PROCEDURE rpt_campaign_performance;
 DROP PROCEDURE rpt_bus_maintenance_history;
+DROP FUNCTION calculate_final_ticket_price; -- ADDED
+
 PROMPT Dropping child tables...
 DROP TABLE StaffAllocation;
 DROP TABLE ServiceDetails;
@@ -17,22 +30,23 @@ DROP TABLE RentalCollection;
 DROP TABLE BookingDetails;
 DROP TABLE Extension;
 DROP TABLE Refund;
-DROP TABLE Booking;
 DROP TABLE Ticket;
 DROP TABLE Promotion;
 DROP TABLE DriverList;
 DROP TABLE Schedule;
+
 PROMPT Dropping base tables...
 DROP TABLE Campaign;
 DROP TABLE Payment;
 DROP TABLE Member;
 DROP TABLE Service;
 DROP TABLE Shop;
+DROP TABLE Staff_Audit_Log; -- ADDED
 DROP TABLE Staff;
 DROP TABLE Driver;
 DROP TABLE Bus;
 DROP TABLE Company;
-DROP TABLE Staff_Audit_Log;
+
 PROMPT Dropping all sequences...
 DROP SEQUENCE company_seq;
 DROP SEQUENCE bus_seq;
@@ -51,7 +65,8 @@ DROP SEQUENCE booking_seq;
 DROP SEQUENCE ticket_seq;
 DROP SEQUENCE refund_seq;
 DROP SEQUENCE extension_seq;
-DROP SEQUENCE staff_audit_log_seq;
+DROP SEQUENCE staff_audit_log_seq; -- ADDED
+
 --=============================================================================
 -- Sequences for Primary Key Generation
 --=============================================================================
@@ -76,7 +91,7 @@ CREATE SEQUENCE extension_seq START WITH 1 INCREMENT BY 1;
 --=============================================================================
 -- Table Creation Script
 --=============================================================================
-
+-- (The rest of the file is unchanged, starting with CREATE TABLE Company...)
 CREATE TABLE Company (
     company_id      NUMBER(10) NOT NULL,
     name            VARCHAR2(100) NOT NULL,
