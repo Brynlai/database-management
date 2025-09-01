@@ -15,7 +15,7 @@ NUM_SHOPS = 30
 NUM_SERVICES = 12
 NUM_MEMBERS = 7500
 NUM_CAMPAIGNS = 10
-NUM_PROMOTIONS = 50
+NUM_PROMOTIONS = 100
 NUM_BUSES = 120
 NUM_SCHEDULES = 5000
 # MODIFICATION: Reduced the primary transaction drivers for a more balanced dataset.
