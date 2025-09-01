@@ -8,7 +8,7 @@
 SET SERVEROUTPUT ON;
 
 --=============================================================================
--- Section 1: Administrative Procedures
+-- Section 1: Administrative Procedures (Module 6)
 --=============================================================================
 -- Purpose: Error handling to prevent duplication of staff records based on their email address, ensureing data integrity.
 
@@ -57,7 +57,7 @@ END Add_New_Staff;
 
 
 --=============================================================================
--- Procedure 2: Assign Driver to Schedule (Operational Level)
+-- Procedure 2: Assign Driver to Schedule (Operational Level) (Module 6)
 --=============================================================================
 -- Purpose: Before assignment, verify both driver and schedule exist.
 

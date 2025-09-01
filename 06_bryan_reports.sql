@@ -25,7 +25,7 @@ SET SERVEROUTPUT ON;
 
 
 --
--- 4.1.7 Report 1: On-demand Summary Report of Annual Campaign Performance.
+-- 4.1.7 Report 1: On-demand Summary Report of Annual Campaign Performance. (Additional Module 2: Campaign promotions.)
 --
 -- Purpose: To provide a strategic overview of campaign effectiveness by summarizing ticket sales, revenue,
 --          and calculating key performance indicators (KPIs) for a user-specified year.
@@ -152,7 +152,7 @@ END rpt_campaign_performance;
 
 
 --
--- 4.1.8 Report 2: On-demand Detail Report of Bus Maintenance History.
+-- 4.1.8 Report 2: On-demand Detail Report of Bus Maintenance History. (Module 7)
 --
 -- Purpose: To provide operational managers with a complete, chronological log of all service activities and
 --          associated costs for a specific bus to aid in maintenance tracking and cost analysis.

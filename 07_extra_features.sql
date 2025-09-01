@@ -8,7 +8,7 @@
 PROMPT Creating indexes for performance...
 
 -- Index for Booking table
--- Purpose: Speeds up finding all bookings made by a specific member. Crucial for person_a's tasks.
+-- Purpose: Speeds up finding all bookings made by a specific member.
 CREATE INDEX idx_booking_member_id ON Booking(member_id);
 
 -- Index for Ticket table
@@ -16,7 +16,7 @@ CREATE INDEX idx_booking_member_id ON Booking(member_id);
 CREATE INDEX idx_ticket_schedule_id ON Ticket(schedule_id);
 
 -- Index for Schedule table
--- Purpose: Speeds up finding all schedules assigned to a specific bus. Crucial for person_b's tasks.
+-- Purpose: Speeds up finding all schedules assigned to a specific bus.
 CREATE INDEX idx_schedule_bus_id ON Schedule(bus_id);
 
 -- Index for BookingDetails table
@@ -28,7 +28,7 @@ CREATE INDEX idx_bookingdetails_ticket_id ON BookingDetails(ticket_id);
 CREATE INDEX idx_staffallocation_staff_id ON StaffAllocation(staff_id);
 
 -- Index for ServiceDetails table
--- Purpose: Optimizes lookups for a bus's complete maintenance history. Supports your reporting tasks.
+-- Purpose: Optimizes lookups for a bus's complete maintenance history.
 CREATE INDEX idx_servicedetails_bus_id ON ServiceDetails(bus_id);
 
 -- Index for DriverList table

@@ -21,7 +21,7 @@ DROP PROCEDURE Add_New_Staff;
 DROP PROCEDURE Assign_Driver_To_Schedule;
 DROP PROCEDURE rpt_campaign_performance;
 DROP PROCEDURE rpt_bus_maintenance_history;
-DROP FUNCTION calculate_final_ticket_price; -- ADDED
+DROP FUNCTION calculate_final_ticket_price;
 
 PROMPT Dropping child tables...
 DROP TABLE StaffAllocation;
@@ -41,7 +41,7 @@ DROP TABLE Payment;
 DROP TABLE Member;
 DROP TABLE Service;
 DROP TABLE Shop;
-DROP TABLE Staff_Audit_Log; -- ADDED
+DROP TABLE Staff_Audit_Log;
 DROP TABLE Staff;
 DROP TABLE Driver;
 DROP TABLE Bus;
@@ -65,7 +65,7 @@ DROP SEQUENCE booking_seq;
 DROP SEQUENCE ticket_seq;
 DROP SEQUENCE refund_seq;
 DROP SEQUENCE extension_seq;
-DROP SEQUENCE staff_audit_log_seq; -- ADDED
+DROP SEQUENCE staff_audit_log_seq;
 
 --=============================================================================
 -- Sequences for Primary Key Generation
@@ -91,7 +91,6 @@ CREATE SEQUENCE extension_seq START WITH 1 INCREMENT BY 1;
 --=============================================================================
 -- Table Creation Script
 --=============================================================================
--- (The rest of the file is unchanged, starting with CREATE TABLE Company...)
 CREATE TABLE Company (
     company_id      NUMBER(10) NOT NULL,
     name            VARCHAR2(100) NOT NULL,

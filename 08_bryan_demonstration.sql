@@ -11,10 +11,6 @@ SET SERVEROUTPUT ON SIZE 1000000;
 -- --=============================================================================
 -- -- TASK 4: STORED PROCEDURES DEMONSTRATION
 -- --=============================================================================
--- DBMS_OUTPUT.PUT_LINE('');
--- DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
--- DBMS_OUTPUT.PUT_LINE('-- Task 4: Stored Procedures Demonstration');
--- DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
 
 
 ---
@@ -70,11 +66,6 @@ END;
 --=============================================================================
 -- TASK 5: TRIGGERS DEMONSTRATION
 --=============================================================================
--- DBMS_OUTPUT.PUT_LINE('');
--- DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
--- DBMS_OUTPUT.PUT_LINE('-- Task 5: Triggers Demonstration');
--- DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
-
 
 ---
 --- --- Testing Trigger 1: trg_audit_staff_changes ---
@@ -111,11 +102,6 @@ END;
 --=============================================================================
 -- TASK 6: REPORTS DEMONSTRATION
 --=============================================================================
--- DBMS_OUTPUT.PUT_LINE('');
--- DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
--- DBMS_OUTPUT.PUT_LINE('-- Task 6: Reports Demonstration');
--- DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
-
 
 ---
 --- --- Testing Report 1: rpt_campaign_performance ---
@@ -157,7 +143,7 @@ END;
 --- --- Testing Function: calculate_final_ticket_price ---
 
 --- [TEST 7.1] Using the function in a query to verify a booking's total amount.
---- We will check Booking ID 4, which may have promotions.
+--- Check Booking ID 4, which may have promotions.
 
 COLUMN stored_booking_total FORMAT 99,990.00 HEADING 'Stored Total'
 COLUMN calculated_booking_total FORMAT 99,990.00 HEADING 'Calculated Total'
@@ -177,8 +163,3 @@ GROUP BY
     b.total_amount;
 
 CLEAR COLUMNS;
-
-DBMS_OUTPUT.PUT_LINE('');
-DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
-DBMS_OUTPUT.PUT_LINE('-- Demonstration Complete');
-DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));

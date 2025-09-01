@@ -44,7 +44,7 @@ COMMENT ON TABLE Staff_Audit_Log IS 'Logs changes to the role or status of recor
 
 
 --=============================================================================
--- Trigger 1: Staff Change Auditing (Operational Level)
+-- Trigger 1: Staff Change Auditing (Operational Level)  (Module 6)
 --=============================================================================
 -- Purpose: Creates a permanent audit record of any changes to a staff member's
 --          role or status for security and accountability.
@@ -96,7 +96,7 @@ END;
 
 
 --=============================================================================
--- Trigger 2: Prevent Orphaned Bus Records (Data Integrity)
+-- Trigger 2: Prevent Orphaned Bus Records (Data Integrity) (Module 6)
 --=============================================================================
 -- Purpose: Protects data integrity by blocking the deletion of any bus company
 --          that still owns active buses in the system.
