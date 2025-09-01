@@ -21,7 +21,6 @@ DROP PROCEDURE Add_New_Staff;
 DROP PROCEDURE Assign_Driver_To_Schedule;
 DROP PROCEDURE rpt_campaign_performance;
 DROP PROCEDURE rpt_bus_maintenance_history;
-DROP FUNCTION calculate_final_ticket_price;
 
 PROMPT Dropping child tables...
 DROP TABLE StaffAllocation;
