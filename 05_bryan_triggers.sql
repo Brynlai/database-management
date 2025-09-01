@@ -6,42 +6,7 @@
 --=============================================================================
 
 SET SERVEROUTPUT ON;
-
---=============================================================================
--- Section 1: Audit Triggers
---=============================================================================
-
-PROMPT Creating sequence and table for audit logs...
-
-CREATE SEQUENCE staff_audit_log_seq START WITH 1 INCREMENT BY 1;
-
-CREATE TABLE Staff_Audit_Log (
-    log_id          NUMBER(10) NOT NULL,
-    staff_id        NUMBER(10) NOT NULL,
-    changed_by      VARCHAR2(50) NOT NULL,
-    change_timestamp TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
-    old_role        VARCHAR2(50),
-    new_role        VARCHAR2(50),
-    old_status      VARCHAR2(20),
-    new_status      VARCHAR2(20),
-    action_type     VARCHAR2(20) NOT NULL,
-    CONSTRAINT pk_staff_audit_log PRIMARY KEY (log_id)
-);
-
-COMMENT ON TABLE Staff_Audit_Log IS 'Logs changes to the role or status of records in the Staff table.';
-
-
-
-
-
-
-
-
-
-
-
-
-
+-- The Staff_Audit_Log table and its sequence are created in 01_create_tables.sql
 
 --=============================================================================
 -- Trigger 1: Staff Change Auditing (Operational Level)  (Module 6)

@@ -87,7 +87,7 @@ CREATE SEQUENCE booking_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE ticket_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE refund_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE extension_seq START WITH 1 INCREMENT BY 1;
-
+CREATE SEQUENCE staff_audit_log_seq START WITH 1 INCREMENT BY 1;
 --=============================================================================
 -- Table Creation Script
 --=============================================================================
@@ -303,5 +303,21 @@ CREATE TABLE StaffAllocation (
     CONSTRAINT fk_sa_servicedetails FOREIGN KEY (service_transaction_id) REFERENCES ServiceDetails(service_transaction_id),
     CONSTRAINT fk_sa_staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
 );
+
+
+CREATE TABLE Staff_Audit_Log (
+    log_id          NUMBER(10) NOT NULL,
+    staff_id        NUMBER(10) NOT NULL,
+    changed_by      VARCHAR2(50) NOT NULL,
+    change_timestamp TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+    old_role        VARCHAR2(50),
+    new_role        VARCHAR2(50),
+    old_status      VARCHAR2(20),
+    new_status      VARCHAR2(20),
+    action_type     VARCHAR2(20) NOT NULL,
+    CONSTRAINT pk_staff_audit_log PRIMARY KEY (log_id)
+);
+
+COMMENT ON TABLE Staff_Audit_Log IS 'Logs changes to the role or status of records in the Staff table.';
 
 COMMIT;
