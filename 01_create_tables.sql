@@ -13,7 +13,7 @@ DROP VIEW V_BUS_SCHEDULE_DETAILS;
 DROP VIEW V_STAFF_SERVICE_WORK;
 
 PROMPT Dropping triggers...
-DROP TRIGGER trg_audit_staff_changes;
+DROP TRIGGER trg_prevent_inactive_assign;
 DROP TRIGGER trg_prevent_company_deletion;
 
 PROMPT Dropping procedures and functions...
@@ -41,7 +41,6 @@ DROP TABLE Payment;
 DROP TABLE Member;
 DROP TABLE Service;
 DROP TABLE Shop;
-DROP TABLE Staff_Audit_Log;
 DROP TABLE Staff;
 DROP TABLE Driver;
 DROP TABLE Bus;
@@ -65,7 +64,6 @@ DROP SEQUENCE booking_seq;
 DROP SEQUENCE ticket_seq;
 DROP SEQUENCE refund_seq;
 DROP SEQUENCE extension_seq;
-DROP SEQUENCE staff_audit_log_seq;
 
 --=============================================================================
 -- Sequences for Primary Key Generation
@@ -87,7 +85,6 @@ CREATE SEQUENCE booking_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE ticket_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE refund_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE extension_seq START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE staff_audit_log_seq START WITH 1 INCREMENT BY 1;
 --=============================================================================
 -- Table Creation Script
 --=============================================================================
@@ -304,20 +301,5 @@ CREATE TABLE StaffAllocation (
     CONSTRAINT fk_sa_staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
 );
 
-
-CREATE TABLE Staff_Audit_Log (
-    log_id          NUMBER(10) NOT NULL,
-    staff_id        NUMBER(10) NOT NULL,
-    changed_by      VARCHAR2(50) NOT NULL,
-    change_timestamp TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
-    old_role        VARCHAR2(50),
-    new_role        VARCHAR2(50),
-    old_status      VARCHAR2(20),
-    new_status      VARCHAR2(20),
-    action_type     VARCHAR2(20) NOT NULL,
-    CONSTRAINT pk_staff_audit_log PRIMARY KEY (log_id)
-);
-
-COMMENT ON TABLE Staff_Audit_Log IS 'Logs changes to the role or status of records in the Staff table.';
 
 COMMIT;

@@ -68,21 +68,50 @@ END;
 --=============================================================================
 
 ---
---- --- Testing Trigger 1: trg_audit_staff_changes ---
+--- --- Testing Trigger 1: trg_check_active_staff_assignment ---
+--- --- Testing Trigger to Prevent Inactive Staff Assignment ---
 
---- [TEST 3.1] Updating a staff member's role to activate the audit trigger.
---- First, let's see the current role of Staff ID 20:
-SELECT name, role FROM Staff WHERE staff_id = 20;
+-- Let's use Staff ID 1 and Service Transaction ID 15 for this test.
+-- First, confirm the staff member's initial status.
+SELECT name, status FROM Staff WHERE staff_id = 1;
 
---- Now, we perform the update...
-UPDATE Staff SET role = 'Manager' WHERE staff_id = 20;
+--- [TEST 3.1] SUCCESS CASE: Assign an 'Active' staff member to a task.
+BEGIN
+    INSERT INTO StaffAllocation(service_transaction_id, staff_id, role)
+    VALUES (15, 1, 'Technician');
+    DBMS_OUTPUT.PUT_LINE('Success: Active staff member assigned correctly.');
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Failure: ' || SQLERRM);
+END;
+/
+-- Verification Step
+SELECT * FROM StaffAllocation WHERE service_transaction_id = 15 AND staff_id = 1;
+
+
+--- [TEST 3.2] FAILURE CASE: Attempt to assign the same staff member after making them inactive.
+-- First, change the status to 'Resigned'.
+UPDATE Staff SET status = 'Resigned' WHERE staff_id = 1;
+COMMIT;
+SELECT name, status FROM Staff WHERE staff_id = 1;
+
+-- Now, attempt to assign them to another task (Service Transaction ID 16).
+BEGIN
+    INSERT INTO StaffAllocation(service_transaction_id, staff_id, role)
+    VALUES (16, 1, 'Technician');
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Failure as expected: ' || SQLERRM);
+END;
+/
+
+-- Cleanup: Revert staff status back to 'Active' for consistency.
+UPDATE Staff SET status = 'Active' WHERE staff_id = 1;
+DELETE FROM StaffAllocation WHERE service_transaction_id = 15 AND staff_id = 1;
 COMMIT;
 
---- The update is done. Let's verify the new role:
-SELECT name, role FROM Staff WHERE staff_id = 20;
 
---- And finally, let's check the Staff_Audit_Log to prove the trigger worked automatically:
-SELECT log_id, staff_id, old_role, new_role, changed_by FROM Staff_Audit_Log WHERE staff_id = 20;
+--- End of Staff Assignment Trigger Test ---
 
 
 ---
