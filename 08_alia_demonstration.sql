@@ -1,0 +1,84 @@
+-- Query 1: Member Booking history
+
+-- jessica14@example.net
+
+
+
+
+-- Query 2: Bus schedule search
+
+-- 2025-12-17
+-- origin station: Port Patricia
+-- destination station: Lake Jasonhaven
+
+
+
+
+-- Procedure 1:  Register new member (member_register)
+DECLARE 
+  v_new_id NUMBER;
+BEGIN 
+  member_register(
+    p_name         => 'flins'
+    p_email        => 'flinsss@gmail.com'
+    p_contact_no   => '011-1008923'
+    o_member_id    => v_new_id
+  );
+END;
+/
+-- put flins's id here!: 
+
+
+
+-- Procedure 2: Purchase tickets in a booking (ticket_purchase)
+DECLARE
+  v_new_booking_id NUMBER;
+  v_requests ticket_request_list;
+BEGIN
+  v_requests := ticket_request_list(
+    ticket_request_obj(26, '3A'), 
+    ticket_request_obj(26, '3B')  
+
+  ticket_purchase(
+    p_member_id       => 7000,
+    p_payment_method  => 'Credit Card',
+    p_ticket_requests => v_requests,
+    o_booking_id      => v_new_booking_id
+  );
+END;
+/
+
+
+
+
+
+
+
+
+
+-- Trigger 1: Update Ticket Status on Refund (trg_update_ticket_on_refund)
+
+-- 1. check ticket status
+SELECT ticket_id, status FROM Ticket WHERE ticket_id = 7945;
+
+-- 2. put that ticket into refund
+INSERT INTO Refund (refund_id, refund_date, amount, refund_method, ticket_id)
+VALUES (refund_seq.NEXTVAL, SYSDATE, 40.45, 'Credit Card', 7945);
+
+-- 3. check ticket status again
+SELECT ticket_id, status FROM Ticket WHERE ticket_id = 7945;
+
+
+
+
+--Trigger 2: Validating member’s existence before booking (trg_validate_booking_member)
+
+INSERT INTO Booking (booking_id, booking_date, total_amount, member_id, payment_id)
+VALUES (booking_seq.NEXTVAL, SYSDATE, 50.00, 9999, 9999);
+
+-- Report 1: On demand and Detail report of Company’s Most Valuable Members
+EXEC rpt_company_member_value('Ryan-Wagner', 6);
+
+
+-- Report 2: On-Demand and Detail Report of a Company's Member Cancellations
+EXEC rpt_company_cancellation('Johnson Inc', 2025, 5);
