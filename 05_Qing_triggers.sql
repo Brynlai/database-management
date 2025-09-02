@@ -552,6 +552,124 @@ END test_triggers_with_sample_data;
 /
 
 -- =============================================================================
+-- Test procedure to demonstrate trigger functionality
+-- =============================================================================
+
+CREATE OR REPLACE PROCEDURE test_triggers AS
+    v_test_ticket_id NUMBER;
+    v_test_refund_id NUMBER;
+    v_test_extension_id NUMBER;
+    
+    -- Custom exception for testing
+    test_failed EXCEPTION;
+    PRAGMA EXCEPTION_INIT(test_failed, -20099);
+    
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('=== TESTING TRIGGERS ===');
+    
+    -- Find a booked ticket with departure more than 48 hours away
+    BEGIN
+        SELECT t.ticket_id
+        INTO v_test_ticket_id
+        FROM Ticket t
+        INNER JOIN Schedule s ON t.schedule_id = s.schedule_id
+        WHERE t.status = 'Booked'
+          AND (s.departure_time - SYSDATE) * 24 > 48
+          AND NOT EXISTS (SELECT 1 FROM Refund r WHERE r.ticket_id = t.ticket_id)
+          AND ROWNUM = 1;
+        
+        DBMS_OUTPUT.PUT_LINE('Test ticket found: ' || v_test_ticket_id);
+        
+        -- Test 1: Valid refund (should succeed)
+        DBMS_OUTPUT.PUT_LINE('TEST 1: Valid refund');
+        
+        SELECT refund_seq.NEXTVAL INTO v_test_refund_id FROM DUAL;
+        
+        INSERT INTO Refund (
+            refund_id, refund_date, amount, refund_method, ticket_id
+        ) VALUES (
+            v_test_refund_id, SYSDATE, 35.00, 'Online Banking', v_test_ticket_id
+        );
+        
+        DBMS_OUTPUT.PUT_LINE('Refund inserted successfully');
+        
+        -- Clean up
+        DELETE FROM Refund WHERE refund_id = v_test_refund_id;
+        DBMS_OUTPUT.PUT_LINE('Test refund cleaned up');
+        
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('No suitable test ticket found for valid refund test');
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Unexpected error in valid refund test: ' || SQLERRM);
+    END;
+    
+    -- Test 2: Try to refund a cancelled ticket (should fail)
+    BEGIN
+        SELECT ticket_id INTO v_test_ticket_id
+        FROM Ticket 
+        WHERE status = 'Cancelled' 
+          AND ROWNUM = 1;
+        
+        DBMS_OUTPUT.PUT_LINE('TEST 2: Refund cancelled ticket');
+        
+        SELECT refund_seq.NEXTVAL INTO v_test_refund_id FROM DUAL;
+        
+        INSERT INTO Refund (
+            refund_id, refund_date, amount, refund_method, ticket_id
+        ) VALUES (
+            v_test_refund_id, SYSDATE, 35.00, 'Online Banking', v_test_ticket_id
+        );
+        
+        -- If we get here, the test failed
+        RAISE test_failed;
+        
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE = -20002 THEN
+                DBMS_OUTPUT.PUT_LINE('Correctly blocked refund for cancelled ticket');
+            ELSE
+                DBMS_OUTPUT.PUT_LINE('Unexpected error: ' || SQLERRM);
+            END IF;
+    END;
+    
+    -- Test 3: Try to extend a refunded ticket (should fail)
+    BEGIN
+        -- First find or create a refunded ticket
+        SELECT t.ticket_id INTO v_test_ticket_id
+        FROM Ticket t
+        WHERE EXISTS (SELECT 1 FROM Refund r WHERE r.ticket_id = t.ticket_id)
+          AND ROWNUM = 1;
+        
+        DBMS_OUTPUT.PUT_LINE('TEST 3: Extend refunded ticket');
+        
+        SELECT extension_seq.NEXTVAL INTO v_test_extension_id FROM DUAL;
+        
+        INSERT INTO Extension (
+            extension_id, extension_date, amount, extension_method, ticket_id
+        ) VALUES (
+            v_test_extension_id, SYSDATE, 40.00, 'Credit Card', v_test_ticket_id
+        );
+        
+        -- If we get here, the test failed
+        RAISE test_failed;
+        
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE = -20012 THEN
+                DBMS_OUTPUT.PUT_LINE('Correctly blocked extension for refunded ticket');
+            ELSE
+                DBMS_OUTPUT.PUT_LINE('Unexpected error: ' || SQLERRM);
+            END IF;
+    END;
+    
+    DBMS_OUTPUT.PUT_LINE('=== TRIGGER TESTS COMPLETED ===');
+    
+END test_triggers;
+/
+
+
+-- =============================================================================
 -- Initialize some sample data for testing if tables are empty
 -- =============================================================================
 
@@ -615,3 +733,6 @@ PROMPT =========================================================================
 
 -- Display the trigger information immediately
 EXEC show_trigger_info;
+
+-- Execute the test
+EXEC test_triggers;
