@@ -9,18 +9,18 @@ CREATE OR REPLACE PROCEDURE rpt_company_member_value (
     p_top_n        IN NUMBER DEFAULT 5
 )
 AS
-    CURSOR company_cursor IS
-        SELECT company_id, name FROM Company WHERE LOWER(name) = LOWER(p_company_name);
+    CURSOR company_cursor IS SELECT company_id, name FROM Company WHERE LOWER(name) = LOWER(p_company_name);
     CURSOR top_spenders_cursor (p_company_id IN NUMBER) IS
-        SELECT
-            m.name, m.email, SUM(s.base_price) as total_spent_with_company
+        SELECT m.name, m.email, SUM(s.base_price) as total_spent
         FROM Member m JOIN Booking b ON m.member_id = b.member_id JOIN BookingDetails bd ON b.booking_id = bd.booking_id
         JOIN Ticket t ON bd.ticket_id = t.ticket_id JOIN Schedule s ON t.schedule_id = s.schedule_id
         JOIN Bus bu ON s.bus_id = bu.bus_id WHERE bu.company_id = p_company_id
-        GROUP BY m.name, m.email ORDER BY total_spent_with_company DESC;
+        GROUP BY m.name, m.email ORDER BY total_spent DESC;
     v_rank NUMBER;
     v_company_found BOOLEAN := FALSE;
     v_title VARCHAR2(100);
+    -- NEW: Variables for our grand totals
+    v_grand_total_revenue NUMBER := 0;
 BEGIN
     v_title := 'Top ' || p_top_n || ' Most Valuable Members Report';
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
@@ -33,43 +33,30 @@ BEGIN
         DBMS_OUTPUT.NEW_LINE;
         DBMS_OUTPUT.PUT_LINE('Analysis for Company: ' || company_rec.name);
         DBMS_OUTPUT.PUT_LINE(RPAD('-', 80, '-'));
-        
-        DBMS_OUTPUT.PUT_LINE(
-            RPAD('Rank', 6) ||
-            RPAD('Member Name', 28) ||
-            RPAD('Email Address', 30) ||
-            'Total Spent (RM)'
-        );
-        DBMS_OUTPUT.PUT_LINE(
-            RPAD('----', 6) ||
-            RPAD('-----------------------', 28) ||
-            RPAD('-------------------------', 30) ||
-            '----------------'
-        );
-        
+        DBMS_OUTPUT.PUT_LINE(RPAD('Rank', 6) || RPAD('Member Name', 28) || RPAD('Email Address', 30) || 'Total Spent (RM)');
+        DBMS_OUTPUT.PUT_LINE(RPAD('----', 6) || RPAD('-----------------------', 28) || RPAD('-------------------------', 30) || '----------------');
         v_rank := 1;
         FOR member_rec IN top_spenders_cursor(company_rec.company_id) LOOP
-            EXIT WHEN v_rank > p_top_n;
-            
-            DBMS_OUTPUT.PUT_LINE(
-                RPAD(v_rank, 6) ||
-                RPAD(member_rec.name, 28) ||
-                RPAD(member_rec.email, 30) ||
-                LPAD(TO_CHAR(member_rec.total_spent_with_company, 'FM9,999,990.00'), 16) -- Use LPAD for right-alignment of numbers
-            );
+            IF v_rank <= p_top_n THEN
+                DBMS_OUTPUT.PUT_LINE(RPAD(v_rank, 6) || RPAD(member_rec.name, 28) || RPAD(member_rec.email, 30) || LPAD(TO_CHAR(member_rec.total_spent, 'FM9,999,990.00'), 16));
+            END IF;
+            v_grand_total_revenue := v_grand_total_revenue + member_rec.total_spent;
             v_rank := v_rank + 1;
         END LOOP;
-
         IF v_rank = 1 THEN
             DBMS_OUTPUT.PUT_LINE('  No member spending data found for this company.');
+        ELSE
+            -- ===== NEW: Grand Total Summary Section =====
+            DBMS_OUTPUT.NEW_LINE;
+            DBMS_OUTPUT.PUT_LINE(RPAD('-', 80, '-'));
+            DBMS_OUTPUT.PUT_LINE('Overall Summary for ' || company_rec.name || ':');
+            DBMS_OUTPUT.PUT_LINE(RPAD('Total Revenue from All Members:', 40) || 'RM ' || LPAD(TO_CHAR(v_grand_total_revenue, 'FM99,999,990.00'), 20));
         END IF;
     END LOOP;
-
     IF NOT v_company_found THEN
         DBMS_OUTPUT.NEW_LINE;
         DBMS_OUTPUT.PUT_LINE('No company found with the name ''' || p_company_name || '''.');
     END IF;
-
     DBMS_OUTPUT.NEW_LINE;
     DBMS_OUTPUT.PUT_LINE(LPAD('--- End of Report ---', 49));
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
@@ -89,11 +76,7 @@ CREATE OR REPLACE PROCEDURE rpt_company_cancellation (
     p_top_n        IN NUMBER DEFAULT 3
 )
 AS
-    -- MASTER CURSOR
-    CURSOR company_cursor IS
-        SELECT company_id, name FROM Company WHERE LOWER(name) = LOWER(p_company_name);
-
-    -- DETAIL CURSOR
+    CURSOR company_cursor IS SELECT company_id, name FROM Company WHERE LOWER(name) = LOWER(p_company_name);
     CURSOR member_cancellation_cursor (p_company_id IN NUMBER, p_filter_year IN NUMBER) IS
         SELECT m.name, m.email, COUNT(t.ticket_id) as cancellation_count
         FROM Member m JOIN Booking b ON m.member_id = b.member_id JOIN BookingDetails bd ON b.booking_id = bd.booking_id
@@ -104,6 +87,9 @@ AS
     v_rank NUMBER;
     v_company_found BOOLEAN := FALSE;
     v_title VARCHAR2(100);
+    -- NEW: Variables for our grand totals
+    v_total_cancellations NUMBER := 0;
+    v_total_unique_cancellers NUMBER := 0;
 BEGIN
     v_title := 'Top ' || p_top_n || ' Member Cancellations Report';
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
@@ -116,45 +102,32 @@ BEGIN
         DBMS_OUTPUT.NEW_LINE;
         DBMS_OUTPUT.PUT_LINE('Analysis for Company: ' || company_rec.name || ' in Year ' || p_year);
         DBMS_OUTPUT.PUT_LINE(RPAD('-', 80, '-'));
-
-        -- Column Headers
-        DBMS_OUTPUT.PUT_LINE(
-            RPAD('Rank', 6) ||
-            RPAD('Member Name', 28) ||
-            RPAD('Email Address', 30) ||
-            'Cancellations'
-        );
-        DBMS_OUTPUT.PUT_LINE(
-            RPAD('----', 6) ||
-            RPAD('-----------------------', 28) ||
-            RPAD('-------------------------', 30) ||
-            '-------------'
-        );
-        
+        DBMS_OUTPUT.PUT_LINE(RPAD('Rank', 6) || RPAD('Member Name', 28) || RPAD('Email Address', 30) || 'Cancellations');
+        DBMS_OUTPUT.PUT_LINE(RPAD('----', 6) || RPAD('-----------------------', 28) || RPAD('-------------------------', 30) || '-------------');
         v_rank := 1;
         FOR member_rec IN member_cancellation_cursor(company_rec.company_id, p_year) LOOP
-            EXIT WHEN v_rank > p_top_n;
-            
-            -- Column-Formatted Output
-            DBMS_OUTPUT.PUT_LINE(
-                RPAD(v_rank, 6) ||
-                RPAD(member_rec.name, 28) ||
-                RPAD(member_rec.email, 30) ||
-                LPAD(member_rec.cancellation_count, 16)
-            );
+            IF v_rank <= p_top_n THEN
+                DBMS_OUTPUT.PUT_LINE(RPAD(v_rank, 6) || RPAD(member_rec.name, 28) || RPAD(member_rec.email, 30) || LPAD(member_rec.cancellation_count, 16));
+            END IF;
+            v_total_cancellations := v_total_cancellations + member_rec.cancellation_count;
+            v_total_unique_cancellers := v_total_unique_cancellers + 1;
             v_rank := v_rank + 1;
         END LOOP;
-
         IF v_rank = 1 THEN
             DBMS_OUTPUT.PUT_LINE('  No member cancellations found for this company in ' || p_year || '.');
+        ELSE
+            -- ===== NEW: Grand Total Summary Section =====
+            DBMS_OUTPUT.NEW_LINE;
+            DBMS_OUTPUT.PUT_LINE(RPAD('-', 80, '-'));
+            DBMS_OUTPUT.PUT_LINE('Overall Summary for ' || company_rec.name || ' in ' || p_year || ':');
+            DBMS_OUTPUT.PUT_LINE(RPAD('Total Unique Members who Cancelled:', 40) || LPAD(v_total_unique_cancellers, 21));
+            DBMS_OUTPUT.PUT_LINE(RPAD('Grand Total of All Cancellations:', 40) || LPAD(v_total_cancellations, 21));
         END IF;
     END LOOP;
-
     IF NOT v_company_found THEN
         DBMS_OUTPUT.NEW_LINE;
         DBMS_OUTPUT.PUT_LINE('No company found with the name ''' || p_company_name || '''.');
     END IF;
-
     DBMS_OUTPUT.NEW_LINE;
     DBMS_OUTPUT.PUT_LINE(LPAD('--- End of Report ---', 49));
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 80, '='));
