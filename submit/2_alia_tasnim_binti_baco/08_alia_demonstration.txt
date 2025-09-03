@@ -19,9 +19,9 @@ DECLARE
   v_new_id NUMBER;
 BEGIN 
   member_register(
-    p_name         => 'flins'
-    p_email        => 'flinsss@gmail.com'
-    p_contact_no   => '011-1008923'
+    p_name         => 'flins',
+    p_email        => 'flinsss@gmail.com',
+    p_contact_no   => '011-1008923',
     o_member_id    => v_new_id
   );
 END;
