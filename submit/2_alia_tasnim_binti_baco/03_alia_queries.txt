@@ -61,7 +61,6 @@ SELECT
     vbsd.company_name,
     vbsd.base_price,
     (vbsd.capacity - (SELECT COUNT(*) FROM Ticket t WHERE t.schedule_id = vbsd.schedule_id AND t.status = 'Booked')) AS available_seats,
-   
     NVL((
         SELECT LISTAGG(t.seat_number, ', ') WITHIN GROUP (ORDER BY t.seat_number)
         FROM Ticket t
