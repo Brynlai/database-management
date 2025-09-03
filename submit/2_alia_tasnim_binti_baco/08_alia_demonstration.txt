@@ -77,9 +77,14 @@ SELECT ticket_id, status FROM Ticket WHERE ticket_id = 7945;
 INSERT INTO Booking (booking_id, booking_date, total_amount, member_id, payment_id)
 VALUES (booking_seq.NEXTVAL, SYSDATE, 50.00, 9999, 9999);
 
+
+
+
 -- Report 1: On demand and Detail report of Company’s Most Valuable Members
-EXEC rpt_company_member_value('Ryan-Wagner', 6);
+SET SERVEROUTPUT ON SIZE 1000000;
+EXEC rpt_company_member_value(p_company_name => 'Johnson Inc', p_top_n => 5);
 
 
 -- Report 2: On-Demand and Detail Report of a Company's Member Cancellations
-EXEC rpt_company_cancellation('Johnson Inc', 2025, 5);
+SET SERVEROUTPUT ON SIZE 1000000;
+EXEC rpt_company_cancellation(p_company_name => 'Cole, Francis and Wells', p_year => 2025, p_top_n => 3);

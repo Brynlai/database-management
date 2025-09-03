@@ -1,4 +1,54 @@
 -- =================================
+-- VIEW 1: V_MEMBER_TRAVEL_HISTORY
+-- =================================
+
+CREATE OR REPLACE VIEW V_MEMBER_TRAVEL_HISTORY AS
+SELECT
+    m.email AS member_email,
+    b.booking_date,
+    s.origin_station,
+    s.destination_station,
+    s.departure_time,
+    t.seat_number,
+    t.status AS ticket_status,
+    s.base_price,
+    c.name AS company_name
+FROM Booking b
+JOIN Member m ON b.member_id = m.member_id
+JOIN BookingDetails bd ON b.booking_id = bd.booking_id
+JOIN Ticket t ON bd.ticket_id = t.ticket_id
+JOIN Schedule s ON t.schedule_id = s.schedule_id
+JOIN Bus bu ON s.bus_id = bu.bus_id
+JOIN Company c ON bu.company_id = c.company_id
+LEFT JOIN Promotion p ON t.promotion_id = p.promotion_id;
+
+COMMIT;
+
+-- =================================
+-- VIEW 2: V_BOOKABLE_SCHEDULES
+-- =================================
+
+CREATE OR REPLACE VIEW V_BOOKABLE_SCHEDULES AS
+SELECT
+    s.schedule_id,
+    s.departure_time,
+    s.arrival_time,
+    c.name AS company_name,
+    s.base_price,
+    bu.capacity,
+    s.platform_no,
+    s.origin_station,
+    s.destination_station
+FROM Schedule s
+JOIN Bus bu ON s.bus_id = bu.bus_id
+JOIN Company c ON bu.company_id = c.company_id
+WHERE s.departure_time >= TRUNC(SYSDATE);
+
+COMMIT;
+
+-- =========================================================================================
+
+-- =================================
 -- QUERY 1: MEMBER BOOKING HISTORY
 -- =================================
 
@@ -27,7 +77,7 @@ SELECT
     ticket_status,
     base_price,
     company_name
-FROM V_BOOKING_DETAILS
+FROM V_MEMBER_TRAVEL_HISTORY
 WHERE LOWER(TRIM(member_email)) = LOWER(TRIM('&enter_member_email'))
 ORDER BY booking_date DESC, departure_time ASC;
 
@@ -36,6 +86,8 @@ BTITLE OFF;
 CLEAR COLUMNS;
 CLEAR BREAKS;
 CLEAR COMPUTES;
+
+
 
 -- =================================
 -- QUERY 2: BUS SCHEDULE SEARCH
@@ -68,10 +120,9 @@ SELECT
     ), 'None booked yet') AS booked_seats,
     vbsd.platform_no
 FROM
-    V_BUS_SCHEDULE_DETAILS vbsd
+    V_BOOKABLE_SCHEDULES vbsd
 WHERE
     TRUNC(vbsd.departure_time) = TO_DATE('&enter_date_YYYY_MM_DD', 'YYYY-MM-DD')
-    AND TRUNC(vbsd.departure_time) >= TRUNC(SYSDATE)
     AND LOWER(vbsd.origin_station) = LOWER('&enter_origin_station')
     AND LOWER(vbsd.destination_station) = LOWER('&enter_destination_station')
     AND (vbsd.capacity - (SELECT COUNT(*) FROM Ticket t WHERE t.schedule_id = vbsd.schedule_id AND t.status = 'Booked')) > 0
@@ -80,6 +131,3 @@ ORDER BY
 
 CLEAR COLUMNS;
 TTITLE OFF;
-
-
-
