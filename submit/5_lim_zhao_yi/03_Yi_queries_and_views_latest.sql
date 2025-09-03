@@ -26,6 +26,7 @@ COLUMN payment_count FORMAT 999,990 HEADING 'Number of Payments'
 COLUMN avg_payment FORMAT 999,990.00 HEADING 'Average Payment (RM)'
 
 -- Query 1: Total rental income collected from each shop for the entire year
+CREATE OR REPLACE VIEW vw_total_rental_income AS
 SELECT 
     s.shop_name,
     s.location_code,
@@ -37,6 +38,9 @@ LEFT JOIN RentalCollection rc ON s.shop_id = rc.shop_id
     AND EXTRACT(YEAR FROM rc.rental_date) = EXTRACT(YEAR FROM SYSDATE)
 GROUP BY s.shop_id, s.shop_name, s.location_code
 ORDER BY total_rental_income DESC, s.shop_name;
+
+-- Query the view to display the results for Total Rental Income
+SELECT * FROM vw_total_rental_income;
 
 -- Clean up formatting
 CLEAR COLUMNS;
@@ -56,6 +60,7 @@ COLUMN avg_service_cost FORMAT 999,990.00 HEADING 'Average Service Cost (RM)'
 COLUMN latest_service FORMAT A16 HEADING 'Latest Service'
 
 -- Query 2: Total maintenance costs for each bus, ordered from most to least expensive
+CREATE OR REPLACE VIEW vw_total_maintenance_costs AS
 SELECT 
     b.plate_number,
     c.name AS company_name,
@@ -68,6 +73,9 @@ JOIN Company c ON b.company_id = c.company_id
 LEFT JOIN ServiceDetails sd ON b.bus_id = sd.bus_id
 GROUP BY b.bus_id, b.plate_number, c.name
 ORDER BY total_maintenance_cost DESC, b.plate_number;
+
+-- Query the view to display the results for Total Maintenance Costs
+SELECT * FROM vw_total_maintenance_costs;
 
 -- Clean up formatting
 CLEAR COLUMNS;

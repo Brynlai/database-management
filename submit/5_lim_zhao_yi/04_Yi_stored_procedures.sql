@@ -8,6 +8,19 @@
 SET SERVEROUTPUT ON;
 
 --=============================================================================
+-- 2. Create Indexes to Improve Performance
+--=============================================================================
+
+-- Indexes for RentalCollection table
+CREATE INDEX idx_rental_collection_shop_id ON RentalCollection(shop_id);
+CREATE INDEX idx_rental_collection_rental ON RentalCollection(rental_date);
+CREATE INDEX idx_rental_collection_staff_id ON RentalCollection(staff_id);
+
+-- Indexes for ServiceDetails table
+CREATE INDEX idx_service_details_bus_id ON ServiceDetails(bus_id);
+CREATE INDEX idx_service_details_service ON ServiceDetails(service_date);
+
+--=============================================================================
 -- Section 1: Administrative Procedures
 --=============================================================================
 
