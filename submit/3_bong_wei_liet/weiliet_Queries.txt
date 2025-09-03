@@ -50,7 +50,7 @@ JOIN   Driver     d ON d.driver_id = dl.driver_id
 WHERE  dl.schedule_id = :p_schedule_id
 ORDER  BY d.name;
 
--- (via view, if you created V_BUS_SCHEDULE_DETAILS)
+-- (via view, if you created V_SCHEDULE_ASSIGNMENTS)
 -- SELECT driver_id,
 --        driver_name,
 --        license_no,
@@ -59,7 +59,7 @@ ORDER  BY d.name;
 --        TO_CHAR(departure_time,'DD-MON-YYYY HH24:MI') AS dep_time,
 --        TO_CHAR(arrival_time,  'DD-MON-YYYY HH24:MI') AS arr_time,
 --        status
--- FROM   V_BUS_SCHEDULE_DETAILS
+-- FROM   V_SCHEDULE_ASSIGNMENTS
 -- WHERE  schedule_id = :p_schedule_id
 -- ORDER  BY driver_name;
 
@@ -86,7 +86,7 @@ WHERE  b.plate_number = :p_plate
   AND  s.departure_time BETWEEN SYSDATE AND SYSDATE + 7
 ORDER  BY s.departure_time;
 
--- (via view, if you created V_BUS_SCHEDULE_DETAILS):
+-- (via view, if you created V_SCHEDULE_ASSIGNMENTS):
 -- SELECT schedule_id,
 --        plate_number,
 --        TO_CHAR(departure_time,'DD-MON-YYYY HH24:MI') AS dep_time,
@@ -95,7 +95,7 @@ ORDER  BY s.departure_time;
 --        destination_station,
 --        platform_no,
 --        status
--- FROM   V_BUS_SCHEDULE_DETAILS
+-- FROM   V_SCHEDULE_ASSIGNMENTS
 -- WHERE  plate_number = :p_plate
 --   AND  departure_time BETWEEN SYSDATE AND SYSDATE + 7
 -- ORDER  BY departure_time;
