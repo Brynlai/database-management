@@ -1,0 +1,127 @@
+-- ===================================================
+-- Procedure 1: Register new member (member_register)
+-- ===================================================
+
+SET SERVEROUTPUT ON;
+
+CREATE OR REPLACE PROCEDURE member_register (
+    p_name          IN Member.name%TYPE,
+    p_email         IN Member.email%TYPE,
+    p_contact_no    IN Member.contact_no%TYPE,
+    o_member_id     OUT Member.member_id%TYPE
+)
+AS
+    v_email_count NUMBER;
+BEGIN
+    SELECT COUNT(*)
+    INTO v_email_count
+    FROM Member
+    WHERE email = p_email;
+
+    IF v_email_count > 0 THEN
+        -- Raise a specific, user-friendly error if the email is found
+        RAISE_APPLICATION_ERROR(-20001, 'Registration failed: A member with the email ''' || p_email || ''' already exists.');
+    END IF;
+
+    -- If the email is indeed unique, generate a next ID member_id using the sequence.
+    SELECT member_seq.NEXTVAL INTO o_member_id FROM DUAL;
+
+    -- Insert the new member record.
+    INSERT INTO Member (
+        member_id,
+        name,
+        email,
+        contact_no,
+        registration_date
+    ) VALUES (
+        o_member_id,
+        p_name,
+        p_email,
+        p_contact_no,
+        SYSDATE
+    );
+
+    -- Commit the transaction to make the new member permanent.
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Success: Member ''' || p_name || ''' registered with ID ' || o_member_id || '.');
+
+EXCEPTION
+    WHEN OTHERS THEN
+        -- If any error occurs, roll back any uncommitted changes.
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('An unexpected error occurred during registration: ' || SQLERRM);
+        RAISE; -- Re-raise the exception to inform the calling application.
+END member_register;
+/
+
+COMMIT;
+
+
+-- =============================================================
+-- Procedure 2: Purchase tickets in a booking (ticket_purchase)
+-- =============================================================
+
+CREATE OR REPLACE PROCEDURE ticket_purchase (
+    p_member_id         IN Member.member_id%TYPE,
+    p_payment_method    IN Payment.payment_method%TYPE,
+    p_ticket_requests   IN ticket_request_list,
+    o_booking_id        OUT Booking.booking_id%TYPE
+)
+AS
+    v_total_amount      NUMBER(10, 2) := 0;
+    v_schedule_rec      Schedule%ROWTYPE; -- Use a record to hold the whole schedule row.
+    v_new_payment_id    Payment.payment_id%TYPE;
+    v_new_ticket_id     Ticket.ticket_id%TYPE;
+    v_member_exists     NUMBER;
+    v_seat_taken        NUMBER;
+BEGIN
+    -- Step 1: Validate Member ID.
+    SELECT COUNT(*) INTO v_member_exists FROM Member WHERE member_id = p_member_id;
+    IF v_member_exists = 0 THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Purchase failed: Member ID ' || p_member_id || ' does not exist.');
+    END IF;
+
+    -- Step 2: Loop, Validate, and Calculate.
+    FOR i IN 1..p_ticket_requests.COUNT LOOP
+        -- Get the entire schedule record for validation.
+        BEGIN
+            SELECT * INTO v_schedule_rec FROM Schedule WHERE schedule_id = p_ticket_requests(i).schedule_id;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RAISE_APPLICATION_ERROR(-20004, 'Purchase failed: Schedule ID ' || p_ticket_requests(i).schedule_id || ' does not exist.');
+        END;
+
+        IF v_schedule_rec.departure_time < SYSDATE THEN
+             RAISE_APPLICATION_ERROR(-20006, 'Booking Rejected: Cannot book a ticket for a schedule that has already departed (Schedule ID: ' || v_schedule_rec.schedule_id || ').');
+        END IF;
+
+        -- Check if seat is taken
+        SELECT COUNT(*) INTO v_seat_taken FROM Ticket WHERE schedule_id = p_ticket_requests(i).schedule_id AND seat_number = p_ticket_requests(i).seat_number AND status = 'Booked';
+        IF v_seat_taken > 0 THEN
+            RAISE_APPLICATION_ERROR(-20003, 'Purchase failed: Seat ' || p_ticket_requests(i).seat_number || ' is already taken.');
+        END IF;
+
+        -- Add price to total
+        v_total_amount := v_total_amount + v_schedule_rec.base_price;
+    END LOOP;
+
+    -- Steps 3, 4, 5 (Payment, Booking, Ticket creation)
+    INSERT INTO Payment (payment_id, amount, payment_method) VALUES (payment_seq.NEXTVAL, v_total_amount, p_payment_method) RETURNING payment_id INTO v_new_payment_id;
+    INSERT INTO Booking (booking_id, total_amount, member_id, payment_id) VALUES (booking_seq.NEXTVAL, v_total_amount, p_member_id, v_new_payment_id) RETURNING booking_id INTO o_booking_id;
+
+    FOR i IN 1..p_ticket_requests.COUNT LOOP
+        INSERT INTO Ticket (ticket_id, seat_number, status, schedule_id) VALUES (ticket_seq.NEXTVAL, p_ticket_requests(i).seat_number, 'Booked', p_ticket_requests(i).schedule_id) RETURNING ticket_id INTO v_new_ticket_id;
+        INSERT INTO BookingDetails (booking_id, ticket_id) VALUES (o_booking_id, v_new_ticket_id);
+    END LOOP;
+
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Success: Booking #' || o_booking_id || ' created for a total of RM ' || v_total_amount || ' for member ' || p_member_id);
+
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END ticket_purchase;
+/
+
+COMMIT;
