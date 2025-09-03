@@ -1,16 +1,10 @@
 --=============================================================================
--- File: oracle_xe112_complete_solution.sql
 -- Target: Oracle XE 11g Release 2
 -- Purpose: Complete solution with properly formatted output and column headers
 --=============================================================================
 -- REQUIREMENTS IMPLEMENTED:
 -- 1. RentalCollection Table: Validate staff_id has Manager role before rental payment
 -- 2. ServiceDetails Table: Validate bus_id exists before logging service
---
--- ANALYSIS FROM YOUR DATABASE:
--- Active Manager staff IDs: 4, 33, 53, 90, 93, 107, 118
--- We'll use staff_id = 4 (LeBron James 3, Manager, Active) for success test
--- We'll use staff_id = 1 (Tiffany Williams, Counter Staff, Active) for failure test
 --=============================================================================
 
 SET SERVEROUTPUT ON 
@@ -91,8 +85,8 @@ PROMPT =========================================================================
 PROMPT TEST 1: RentalCollection with Active Manager (should succeed):
 BEGIN
     INSERT INTO RentalCollection (rental_id, rental_date, amount, collection_date, rental_method, remark, shop_id, staff_id)
-    VALUES (rental_collection_seq.NEXTVAL, SYSDATE, 100.00, SYSDATE, 'Cash', 'Test - Active Manager Success', 1, 33);
-    DBMS_OUTPUT.PUT_LINE(' SUCCESS: Rental collection by Active Manager allowed (Staff ID: 4 - LeBron James 3)');
+    VALUES (rental_collection_seq.NEXTVAL, SYSDATE, 100.00, SYSDATE, 'Cash', 'Test - Active Manager Success', 1, 152);
+    DBMS_OUTPUT.PUT_LINE(' SUCCESS: Rental collection by Active Manager allowed (Staff ID: 152 - LeBron James 151)');
     COMMIT;
 EXCEPTION
     WHEN OTHERS THEN
@@ -186,7 +180,7 @@ SELECT
     status,
     TO_CHAR(employment_date, 'DD-MON-YY') as employment_date
 FROM Staff 
-WHERE staff_id IN (4, 33, 53) AND role = 'Manager'
+WHERE staff_id IN (152) AND role = 'Manager'
 ORDER BY staff_id;
 
 -- Show Counter Staff used in failure test
@@ -204,7 +198,7 @@ WHERE staff_id = 1;
 -- Display test records created today
 PROMPT
 PROMPT *** TEST RECORDS CREATED DURING THIS EXECUTION ***
-COLUMN table_name FORMAT A15 HEADING 'Table Name'
+COLUMN table_name FORMAT A16 HEADING 'Table Name'
 COLUMN record_id FORMAT 999999 HEADING 'Record|ID'
 COLUMN staff_bus_id FORMAT 999999 HEADING 'Staff/Bus|ID'
 COLUMN amount FORMAT 999.99 HEADING 'Amount'
@@ -236,7 +230,7 @@ ORDER BY table_name, record_id DESC;
 PROMPT
 PROMPT *** ALL ACTIVE MANAGER STAFF MEMBERS AVAILABLE FOR TESTING ***
 COLUMN staff_id FORMAT 999999 HEADING 'Staff|ID'
-COLUMN name FORMAT A20 HEADING 'Employee Name'
+COLUMN name FORMAT A22 HEADING 'Employee Name'
 COLUMN role FORMAT A15 HEADING 'Role'
 COLUMN status FORMAT A10 HEADING 'Status'
 

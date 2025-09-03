@@ -8,7 +8,7 @@
 SET SERVEROUTPUT ON;
 
 --=============================================================================
--- Section 2: Operational Reports
+-- Section 1: Operational Reports
 --=============================================================================
 
 PROMPT Creating Report Procedure: rpt_bus_maintenance_history

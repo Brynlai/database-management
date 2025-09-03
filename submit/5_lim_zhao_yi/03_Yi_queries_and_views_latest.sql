@@ -1,8 +1,5 @@
 --=============================================================================
--- File: ancillary_services_finance.sql
 -- Purpose: Ancillary Services & Finance Module for Bus Station Management System
--- Author: [Student Name]
--- Date: August 26, 2025
 -- Database: Oracle XE 11g
 --=============================================================================
 -- This module focuses on non-ticket revenue and operational costs including
@@ -12,7 +9,7 @@
 SET SERVEROUTPUT ON;
 
 --=============================================================================
--- Section 3: Queries (2)
+-- Section 1: Queries (2)
 --=============================================================================
 
 PROMPT Creating Query 1: Total Rental Income by Shop for Current Year
@@ -52,7 +49,7 @@ SET LINESIZE 150
 TTITLE CENTER 'Bus Maintenance Costs Summary (Most to Least Expensive)' SKIP 2
 
 COLUMN plate_number FORMAT A18 HEADING 'Bus Plate Number'
-COLUMN company_name FORMAT A25 HEADING 'Company Name'
+COLUMN company_name FORMAT A26 HEADING 'Company Name'
 COLUMN total_maintenance_cost FORMAT 999,999,990.00 HEADING 'Total Maintenance Cost (RM)'
 COLUMN service_count FORMAT 999,990 HEADING 'Number of Services'
 COLUMN avg_service_cost FORMAT 999,990.00 HEADING 'Average Service Cost (RM)'
