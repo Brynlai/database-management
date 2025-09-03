@@ -1,3 +1,5 @@
+[file name]: 06_reports.sql
+[file content begin]
 -- =============================================================================
 -- Bus Station Management System - Reports with Enhanced Formatting
 -- Focus: Ticket Management & Refunds Reporting
@@ -114,7 +116,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(CENTER_TEXT(UPPER(v_month_name) || ' ' || p_year, 120));
     DBMS_OUTPUT.PUT_LINE(CENTER_TEXT('Generated on: ' || TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI:SS'), 120));
     DBMS_OUTPUT.PUT_LINE(v_separator);
-    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE(CHR(10));
     
     -- Check if there are any refunds for the specified month/year
     FOR company_rec IN c_company_refunds LOOP
@@ -130,7 +132,7 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE('Average:       ' || LPAD(FORMAT_CURRENCY(company_rec.avg_refund_amount), 20));
         DBMS_OUTPUT.PUT_LINE('Range:         ' || LPAD(FORMAT_CURRENCY(company_rec.min_refund_amount), 20) || 
                             ' - ' || FORMAT_CURRENCY(company_rec.max_refund_amount));
-        DBMS_OUTPUT.PUT_LINE('');
+        DBMS_OUTPUT.PUT_LINE(CHR(10));
         
         -- Detailed refund information using nested cursor
         DBMS_OUTPUT.PUT_LINE('DETAILED REFUND BREAKDOWN:');
@@ -175,8 +177,8 @@ BEGIN
             DBMS_OUTPUT.PUT_LINE('    ... and ' || (v_detail_count - 3) || ' more refunds.');
         END IF;
         
-        DBMS_OUTPUT.PUT_LINE('');
-        DBMS_OUTPUT.PUT_LINE('');
+        DBMS_OUTPUT.PUT_LINE(CHR(10));
+        DBMS_OUTPUT.PUT_LINE(CHR(10));
     END LOOP;
     
     -- Overall summary
@@ -315,7 +317,7 @@ BEGIN
                         ' to ' || TO_CHAR(p_end_date, 'DD-MON-YYYY'), 120));
     DBMS_OUTPUT.PUT_LINE(CENTER_TEXT('Generated on: ' || TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI:SS'), 120));
     DBMS_OUTPUT.PUT_LINE(v_separator);
-    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE(CHR(10));
     
     -- Process each day in the week
     FOR daily_rec IN c_daily_extensions LOOP
@@ -329,7 +331,7 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE('Extensions Today: ' || daily_rec.daily_extensions || 
                             ' | Total Amount: ' || FORMAT_CURRENCY(daily_rec.daily_total_amount) ||
                             ' | Average: ' || FORMAT_CURRENCY(daily_rec.daily_avg_amount));
-        DBMS_OUTPUT.PUT_LINE('');
+        DBMS_OUTPUT.PUT_LINE(CHR(10));
         
         -- Payment methods breakdown for the day
         DBMS_OUTPUT.PUT_LINE('PAYMENT METHODS BREAKDOWN:');
@@ -339,7 +341,7 @@ BEGIN
                                 RPAD(payment_rec.method_count || ' extensions', 15) ||
                                 FORMAT_CURRENCY(payment_rec.method_total));
         END LOOP;
-        DBMS_OUTPUT.PUT_LINE('');
+        DBMS_OUTPUT.PUT_LINE(CHR(10));
         
         -- Detailed extension records
         DBMS_OUTPUT.PUT_LINE('DETAILED EXTENSION RECORDS:');
@@ -382,15 +384,15 @@ BEGIN
                                 ' | Payment: ' || detail_rec.extension_method);
             DBMS_OUTPUT.PUT_LINE('  Booking to Extension: ' || detail_rec.days_after_booking || ' days' ||
                                 ' | Platform: ' || NVL(detail_rec.platform_no, 'TBD'));
-            DBMS_OUTPUT.PUT_LINE('');
+            DBMS_OUTPUT.PUT_LINE(CHR(10));
         END LOOP;
         
         IF v_detail_count = 0 THEN
             DBMS_OUTPUT.PUT_LINE('    No extension records found for this day.');
-            DBMS_OUTPUT.PUT_LINE('');
+            DBMS_OUTPUT.PUT_LINE(CHR(10));
         END IF;
         
-        DBMS_OUTPUT.PUT_LINE('');
+        DBMS_OUTPUT.PUT_LINE(CHR(10));
     END LOOP;
     
     -- Weekly summary
@@ -453,20 +455,20 @@ END rpt_ticket_extensions_detail;
 CREATE OR REPLACE PROCEDURE test_ticket_reports AS
 BEGIN
     DBMS_OUTPUT.PUT_LINE('Running sample ticket management reports...');
-    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE(CHR(10));
     
     -- Run monthly refund summary for current month
     DBMS_OUTPUT.PUT_LINE('=== MONTHLY REFUND SUMMARY REPORT ===');
     rpt_monthly_refund_summary(EXTRACT(MONTH FROM SYSDATE), EXTRACT(YEAR FROM SYSDATE));
     
-    DBMS_OUTPUT.PUT_LINE('');
-    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE(CHR(10));
+    DBMS_OUTPUT.PUT_LINE(CHR(10));
     
     -- Run ticket extensions detail for current week
     DBMS_OUTPUT.PUT_LINE('=== TICKET EXTENSIONS DETAIL REPORT ===');
     rpt_ticket_extensions_detail(TRUNC(SYSDATE, 'IW'), TRUNC(SYSDATE, 'IW') + 6);
     
-    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE(CHR(10));
     DBMS_OUTPUT.PUT_LINE('Report testing completed.');
     
 END test_ticket_reports;
