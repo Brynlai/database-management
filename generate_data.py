@@ -222,7 +222,7 @@ def generate_services(f):
     f.write("\n")
 def generate_members(f):
     f.write("-- Data for Member Table\n")
-    for i in member_ids: f.write(f"INSERT INTO Member (member_id, name, email, contact_no, registration_date) VALUES ({i}, '{sql_string(fake.name())}', '{fake.unique.email()}', '{fake.phone_number()}', {sql_date(get_random_date())});\n")
+    for i in member_ids: f.write(f"INSERT INTO Member (member_id, name, email, contact_no, registration_date, paid_registration_fee) VALUES ({i}, '{sql_string(fake.name())}', '{fake.unique.email()}', '{fake.phone_number()}', {sql_date(get_random_date())}, 'Y');\n")
     f.write("\n")
 def generate_campaigns(f):
     f.write("-- Data for Campaign Table\n")
