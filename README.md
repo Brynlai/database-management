@@ -88,7 +88,7 @@ To create and set up the database, execute the SQL scripts in a client connected
 **Note:** To view the output from the reporting procedures, you may need to enable server output in your SQL client:
 ```sql
 SET SERVEROUTPUT ON;
-```
+``` 
 
 ## Technology Stack
 
