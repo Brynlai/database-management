@@ -36,8 +36,8 @@ DECLARE
   v_requests ticket_request_list;
 BEGIN
   v_requests := ticket_request_list(
-    ticket_request_obj(26, '3A'), 
-    ticket_request_obj(26, '3B')  
+    ticket_request_obj(3, '3A'), 
+    ticket_request_obj(3, '3C')  
   );
   
     ticket_purchase(
