@@ -96,12 +96,12 @@ END;
 /
 
 --=============================================================================
--- TEST 2: RENTAL COLLECTION - FAILURE CASE (Counter Staff)
+-- TEST 2: RENTAL COLLECTION - FAILURE CASE (Cleaner Staff)
 --=============================================================================
-PROMPT TEST 2: RentalCollection with Counter Staff (should fail):
+PROMPT TEST 2: RentalCollection with Cleaner Staff (should fail):
 BEGIN
     INSERT INTO RentalCollection (rental_id, rental_date, amount, collection_date, rental_method, remark, shop_id, staff_id)
-    VALUES (rental_collection_seq.NEXTVAL, SYSDATE, 100.00, SYSDATE, 'Cash', 'Test - Counter Staff Fail', 1, 1);
+    VALUES (rental_collection_seq.NEXTVAL, SYSDATE, 100.00, SYSDATE, 'Cash', 'Test - Cleaner Staff Fail', 1, 1);
     DBMS_OUTPUT.PUT_LINE(' ERROR: This should not appear - trigger should have prevented this');
     COMMIT;
 EXCEPTION
@@ -185,7 +185,7 @@ ORDER BY staff_id;
 
 -- Show Counter Staff used in failure test
 PROMPT
-PROMPT *** COUNTER STAFF MEMBER USED IN FAILURE TEST ***
+PROMPT *** CLEANER STAFF MEMBER USED IN FAILURE TEST ***
 SELECT 
     staff_id,
     name,
