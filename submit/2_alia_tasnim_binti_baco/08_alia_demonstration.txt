@@ -82,9 +82,16 @@ VALUES (booking_seq.NEXTVAL, SYSDATE, 50.00, 9999, 9999);
 
 -- Report 1: On demand and Detail report of Company’s Most Valuable Members
 SET SERVEROUTPUT ON SIZE 1000000;
-EXEC rpt_company_member_value(p_company_name => 'Johnson Inc', p_top_n => 5);
+EXEC rpt_company_member_value(p_company_name => 'Russell-Stevens', p_top_n => 5);
 
 
 -- Report 2: On-Demand and Detail Report of a Company's Member Cancellations
+-- to make sure those tickets that bypassed the trigger 1 before it initiates:
+UPDATE Ticket
+SET status = 'Cancelled'
+WHERE ticket_id IN (SELECT ticket_id FROM Refund);
+
+
+-- start reoprt 2
 SET SERVEROUTPUT ON SIZE 1000000;
-EXEC rpt_company_cancellation(p_company_name => 'Cole, Francis and Wells', p_year => 2025, p_top_n => 3);
+EXEC rpt_company_cancellation(p_company_name => 'Howard-Sanders', p_year => 2025, p_top_n => 3);
