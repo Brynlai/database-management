@@ -1,16 +1,11 @@
 --=============================================================================
--- File: 06_reports.sql
---=============================================================================
--- Purpose: Contains stored procedures designed to generate formatted,
---          human-readable reports for management using PL/SQL cursors.
---=============================================================================
-
-SET SERVEROUTPUT ON;
-
---=============================================================================
--- Section 1: Financial and Marketing Reports
+-- File: 06_bryan_reports.sql
+-- Author: Bryan Lai ZhonPoa
+-- Purpose: Contains advanced stored procedures to generate formatted,
+--          analytical reports with actionable insights for management.
 --=============================================================================
 
+SET SERVEROUTPUT ON SIZE 1000000;
 
 
 
@@ -24,110 +19,129 @@ SET SERVEROUTPUT ON;
 
 
 
---
--- 4.1.7 Report 1: On-demand Summary Report of Annual Campaign Performance. (Additional Module 2: Campaign promotions.)
---
--- Purpose: To provide a strategic overview of campaign effectiveness by summarizing ticket sales, revenue,
---          and calculating key performance indicators (KPIs) for a user-specified year.
---
 
-CREATE OR REPLACE PROCEDURE rpt_campaign_performance (
+
+
+
+
+
+--=============================================================================
+-- Report 1: Campaign Analytics Dashboard (Final Version)
+--=============================================================================
+-- Purpose: Provides a strategic, tabular analytics dashboard for marketing.
+--          Each campaign is displayed as a single row, showing key
+--          performance indicators like Adjusted Profit for easy comparison.
+--          A grand total summary is provided. This procedure uses a nested
+--          cursor structure to meet assignment requirements.
+
+CREATE OR REPLACE PROCEDURE rpt_campaign_analytics (
     p_year IN NUMBER
 )
 AS
-    -- Outer cursor: campaigns in the requested year
     CURSOR campaign_cursor IS
-        SELECT
-            c.campaign_id,
-            c.campaign_name
+        SELECT c.campaign_id, c.campaign_name
         FROM Campaign c
-        WHERE EXTRACT(YEAR FROM c.start_date) = p_year
-           OR EXTRACT(YEAR FROM c.end_date) = p_year
-        ORDER BY c.start_date;
+        JOIN Promotion p ON c.campaign_id = p.campaign_id
+        JOIN Ticket t ON p.promotion_id = t.promotion_id
+        JOIN Schedule s ON t.schedule_id = s.schedule_id
+        WHERE t.status = 'Booked'
+          AND (EXTRACT(YEAR FROM c.start_date) = p_year OR EXTRACT(YEAR FROM c.end_date) = p_year)
+        GROUP BY c.campaign_id, c.campaign_name
+        ORDER BY SUM(s.base_price) DESC;
 
-    -- Inner cursor: aggregated stats per campaign
-    CURSOR campaign_stats_cursor (cp_campaign_id IN Campaign.campaign_id%TYPE) IS
+    CURSOR campaign_stats_cursor (cp_campaign_id IN NUMBER) IS
         SELECT
             COUNT(DISTINCT p.promotion_id) AS promo_count,
-            COUNT(vb.ticket_id) AS tickets_sold,
-            NVL(SUM(vb.base_price), 0) AS total_revenue
+            COUNT(t.ticket_id) AS tickets_sold,
+            NVL(SUM(s.base_price), 0) AS gross_revenue,
+            NVL(SUM(CASE p.discount_type
+                    WHEN 'Percentage' THEN s.base_price * (p.discount_value / 100)
+                    WHEN 'Fixed Amount' THEN p.discount_value ELSE 0 END
+            ), 0) AS total_discounts
         FROM Promotion p
-        LEFT JOIN V_BOOKING_DETAILS vb
-               ON vb.promotion_id = p.promotion_id
-              AND vb.ticket_status = 'Booked'
-        WHERE p.campaign_id = cp_campaign_id;
+        JOIN Ticket t ON p.promotion_id = t.promotion_id
+        JOIN Schedule s ON t.schedule_id = s.schedule_id
+        WHERE t.status = 'Booked' AND p.campaign_id = cp_campaign_id;
 
+    v_stats_rec             campaign_stats_cursor%ROWTYPE;
+    v_net_revenue           NUMBER;
+    v_adj_profit            NUMBER;
+    v_grand_gross_rev       NUMBER;
+    v_grand_net_rev         NUMBER;
+    v_grand_discounts       NUMBER;
+    v_grand_tickets         NUMBER;
+    v_grand_promos          NUMBER := 0;
+    v_grand_adj_profit      NUMBER;
     v_report_generated      BOOLEAN := FALSE;
-    v_grand_total_promos    NUMBER := 0;
-    v_grand_total_tickets   NUMBER := 0;
-    v_grand_total_revenue   NUMBER := 0;
-    v_avg_revenue_per_tkt   NUMBER;
 
 BEGIN
-    DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
-    DBMS_OUTPUT.PUT_LINE('Campaign Performance Report for Year: ' || p_year);
-    DBMS_OUTPUT.PUT_LINE(RPAD('-', 100, '-'));
+    SELECT NVL(SUM(tickets_sold),0), NVL(SUM(gross_revenue),0), NVL(SUM(total_discounts),0), NVL(SUM(net_revenue),0), NVL(SUM(adj_profit),0)
+    INTO v_grand_tickets, v_grand_gross_rev, v_grand_discounts, v_grand_net_rev, v_grand_adj_profit
+    FROM (SELECT COUNT(t.ticket_id) AS tickets_sold, SUM(s.base_price) AS gross_revenue,
+            SUM(CASE p.discount_type WHEN 'Percentage' THEN s.base_price * (p.discount_value/100) WHEN 'Fixed Amount' THEN p.discount_value ELSE 0 END) AS total_discounts,
+            SUM(s.base_price) - SUM(CASE p.discount_type WHEN 'Percentage' THEN s.base_price * (p.discount_value/100) WHEN 'Fixed Amount' THEN p.discount_value ELSE 0 END) as net_revenue,
+            SUM(s.base_price) - (2 * SUM(CASE p.discount_type WHEN 'Percentage' THEN s.base_price * (p.discount_value/100) WHEN 'Fixed Amount' THEN p.discount_value ELSE 0 END)) as adj_profit
+          FROM Campaign c JOIN Promotion p ON c.campaign_id=p.campaign_id JOIN Ticket t ON p.promotion_id=t.promotion_id
+          JOIN Schedule s ON t.schedule_id=s.schedule_id
+          WHERE t.status='Booked' AND (EXTRACT(YEAR FROM c.start_date)=p_year OR EXTRACT(YEAR FROM c.end_date)=p_year)
+          GROUP BY c.campaign_id);
+
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 128, '='));
+    DBMS_OUTPUT.PUT_LINE('Campaign Analytics Dashboard for Year: ' || p_year);
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 128, '='));
+
     DBMS_OUTPUT.PUT_LINE(
-        RPAD('Campaign Name', 40) ||
-        RPAD('Promotions', 12) ||
-        RPAD('Tickets Sold', 12) ||
-        RPAD('Avg Rev/Tkt', 15) ||
-        'Total Revenue (RM)'
+        RPAD('Campaign Name', 42) ||
+        LPAD('Promos', 8) ||
+        LPAD('Tickets', 10) ||
+        LPAD('Discounts (RM)', 18) ||
+        LPAD('Net Rev (RM)', 18) ||
+        LPAD('Adj. Profit (RM)', 18) ||
+        LPAD('Avg/Tkt (RM)', 14)
     );
-    DBMS_OUTPUT.PUT_LINE(RPAD('-', 100, '-'));
+    DBMS_OUTPUT.PUT_LINE(RPAD('-', 128, '-'));
 
-    -- Loop through each campaign
-    FOR campaign_rec IN campaign_cursor LOOP
+    FOR camp_rec IN campaign_cursor LOOP
         v_report_generated := TRUE;
+        OPEN campaign_stats_cursor(camp_rec.campaign_id);
+        FETCH campaign_stats_cursor INTO v_stats_rec;
+        CLOSE campaign_stats_cursor;
 
-        FOR stats_rec IN campaign_stats_cursor(campaign_rec.campaign_id) LOOP
-            IF stats_rec.tickets_sold > 0 THEN
-                v_avg_revenue_per_tkt := stats_rec.total_revenue / stats_rec.tickets_sold;
-            ELSE
-                v_avg_revenue_per_tkt := 0;
-            END IF;
+        v_net_revenue := v_stats_rec.gross_revenue - v_stats_rec.total_discounts;
+        v_adj_profit := v_net_revenue - v_stats_rec.total_discounts;
+        v_grand_promos := v_grand_promos + v_stats_rec.promo_count;
 
-            DBMS_OUTPUT.PUT_LINE(
-                RPAD(SUBSTR(campaign_rec.campaign_name, 1, 38), 40) ||
-                LPAD(TO_CHAR(stats_rec.promo_count, 'FM999,990'), 12) ||
-                LPAD(TO_CHAR(stats_rec.tickets_sold, 'FM999,990'), 12) ||
-                LPAD(TO_CHAR(v_avg_revenue_per_tkt, 'FM99,990.00'), 15) ||
-                LPAD(TO_CHAR(stats_rec.total_revenue, 'FM9,999,990.00'), 21)
-            );
-
-            v_grand_total_promos  := v_grand_total_promos + stats_rec.promo_count;
-            v_grand_total_tickets := v_grand_total_tickets + stats_rec.tickets_sold;
-            v_grand_total_revenue := v_grand_total_revenue + stats_rec.total_revenue;
-        END LOOP;
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD(SUBSTR(camp_rec.campaign_name, 1, 40), 42) ||
+            LPAD(TO_CHAR(v_stats_rec.promo_count, 'FM990'), 8) ||
+            LPAD(TO_CHAR(v_stats_rec.tickets_sold, 'FM9,990'), 10) ||
+            LPAD(TO_CHAR(v_stats_rec.total_discounts, 'FM99,999.00'), 18) ||
+            LPAD(TO_CHAR(v_net_revenue, 'FM99,999.00'), 18) ||
+            LPAD(TO_CHAR(v_adj_profit, 'SFM99,999.00'), 18) ||
+            LPAD(TO_CHAR(CASE WHEN v_stats_rec.tickets_sold > 0 THEN v_net_revenue / v_stats_rec.tickets_sold ELSE 0 END, 'FM990.00'), 14)
+        );
     END LOOP;
 
-    -- Handle the case where no campaigns were found
-    IF NOT v_report_generated THEN
-        DBMS_OUTPUT.PUT_LINE('No campaign data found for the year ' || p_year || '.');
-    ELSE
-        DBMS_OUTPUT.PUT_LINE(RPAD('-', 100, '-'));
-        
-        IF v_grand_total_tickets > 0 THEN
-            v_avg_revenue_per_tkt := v_grand_total_revenue / v_grand_total_tickets;
-        ELSE
-            v_avg_revenue_per_tkt := 0;
-        END IF;
-        
+    IF v_report_generated THEN
+        DBMS_OUTPUT.PUT_LINE(RPAD('-', 128, '-'));
         DBMS_OUTPUT.PUT_LINE(
-            RPAD('GRAND TOTALS:', 40) ||
-            LPAD(TO_CHAR(v_grand_total_promos, 'FM999,990'), 12) ||
-            LPAD(TO_CHAR(v_grand_total_tickets, 'FM999,990'), 12) ||
-            LPAD(TO_CHAR(v_avg_revenue_per_tkt, 'FM99,990.00'), 15) ||
-            LPAD(TO_CHAR(v_grand_total_revenue, 'FM9,999,990.00'), 21)
+            RPAD('GRAND TOTALS:', 42) ||
+            LPAD(TO_CHAR(v_grand_promos, 'FM990'), 8) ||
+            LPAD(TO_CHAR(v_grand_tickets, 'FM9,990'), 10) ||
+            LPAD(TO_CHAR(v_grand_discounts, 'FM999,999,990.00'), 18) ||
+            LPAD(TO_CHAR(v_grand_net_rev, 'FM999,999,990.00'), 18) ||
+            LPAD(TO_CHAR(v_grand_adj_profit, 'SFM999,999,990.00'), 18) ||
+            LPAD(TO_CHAR(CASE WHEN v_grand_tickets > 0 THEN v_grand_net_rev / v_grand_tickets ELSE 0 END, 'FM990.00'), 14)
         );
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('No campaign data found for the year ' || p_year || '.');
     END IF;
 
-    DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
-
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 128, '='));
 EXCEPTION
     WHEN OTHERS THEN
         DBMS_OUTPUT.PUT_LINE('An error occurred while generating the report: ' || SQLERRM);
-END rpt_campaign_performance;
+END rpt_campaign_analytics;
 /
 
 
@@ -147,93 +161,120 @@ END rpt_campaign_performance;
 
 
 
-
-
-
-
---
--- 4.1.8 Report 2: On-demand Detail Report of Bus Maintenance History. (Module 7)
---
--- Purpose: To provide operational managers with a complete, chronological log of all service activities and
---          associated costs for a specific bus to aid in maintenance tracking and cost analysis.
---
+--=============================================================================
+-- Report 2: Bus Maintenance History
+--=============================================================================
+-- Purpose: Provides a detailed operational and financial analysis of all
+--          service activities for a specific bus, comparing actual costs
+--          against standard costs to identify budget variances.
 
 CREATE OR REPLACE PROCEDURE rpt_bus_maintenance_history (
     p_bus_id IN Bus.bus_id%TYPE
 )
 AS
-    -- Outer cursor: Fetches the primary record (the bus).
     CURSOR bus_cursor IS
-        SELECT
-            b.bus_id,
-            b.plate_number,
-            c.name as company_name
-        FROM Bus b
-        JOIN Company c ON b.company_id = c.company_id
+        SELECT b.plate_number, c.name as company_name
+        FROM Bus b JOIN Company c ON b.company_id = c.company_id
         WHERE b.bus_id = p_bus_id;
 
-    -- Inner cursor: Fetches the detail records (service history for that bus).
     CURSOR service_history_cursor (cp_bus_id IN Bus.bus_id%TYPE) IS
-        SELECT
-            sd.service_date,
-            s.service_name,
-            sd.actual_cost
+        SELECT s.service_name, sd.service_date, sd.actual_cost, s.standard_cost
         FROM ServiceDetails sd
         JOIN Service s ON sd.service_id = s.service_id
         WHERE sd.bus_id = cp_bus_id
         ORDER BY sd.service_date DESC;
-        
+
     v_bus_found BOOLEAN := FALSE;
     v_event_count NUMBER := 0;
-    v_total_cost  NUMBER := 0;
+    v_total_actual NUMBER := 0;
+    v_total_standard NUMBER := 0;
+    v_variance NUMBER;
 
 BEGIN
-    -- Loop through the outer cursor
     FOR bus_rec IN bus_cursor LOOP
         v_bus_found := TRUE;
-        
-        DBMS_OUTPUT.PUT_LINE(RPAD('=', 70, '='));
-        DBMS_OUTPUT.PUT_LINE('Maintenance History Report');
-        DBMS_OUTPUT.PUT_LINE(RPAD('-', 70, '-'));
+        DBMS_OUTPUT.PUT_LINE(RPAD('=', 110, '='));
+        DBMS_OUTPUT.PUT_LINE('Maintenance History and Cost Variance Report');
+        DBMS_OUTPUT.PUT_LINE(RPAD('-', 110, '-'));
         DBMS_OUTPUT.PUT_LINE('Bus Plate Number: ' || bus_rec.plate_number);
         DBMS_OUTPUT.PUT_LINE('Operating Company: ' || bus_rec.company_name);
         DBMS_OUTPUT.PUT_LINE('');
-        
-        DBMS_OUTPUT.PUT_LINE('Service History:');
-        DBMS_OUTPUT.PUT_LINE(RPAD('-', 70, '-'));
+
+        DBMS_OUTPUT.PUT_LINE('Service History Details:');
+        DBMS_OUTPUT.PUT_LINE(RPAD('-', 110, '-'));
         DBMS_OUTPUT.PUT_LINE(
-            RPAD('Service Date', 20) ||
-            RPAD('Service Name', 30) ||
-            'Cost (RM)'
+            RPAD('Service Date', 14) ||
+            RPAD('Service Name', 28) ||
+            LPAD('Std Cost', 15) ||
+            LPAD('Actual Cost', 15) ||
+            LPAD('Variance', 15) ||
+            LPAD('Variance %', 12)
         );
-        DBMS_OUTPUT.PUT_LINE(RPAD('-', 70, '-'));
-        
-        -- Loop through the inner cursor to print details and calculate totals
-        FOR service_rec IN service_history_cursor(bus_rec.bus_id) LOOP
+        DBMS_OUTPUT.PUT_LINE(RPAD('-', 110, '-'));
+
+        FOR service_rec IN service_history_cursor(p_bus_id) LOOP
+            v_variance := service_rec.actual_cost - service_rec.standard_cost;
+
             DBMS_OUTPUT.PUT_LINE(
-                RPAD(TO_CHAR(service_rec.service_date, 'DD-MON-YYYY'), 20) ||
-                RPAD(SUBSTR(service_rec.service_name, 1, 28), 30) ||
-                LPAD(TO_CHAR(service_rec.actual_cost, 'FM9,999,990.00'), 15)
+                RPAD(TO_CHAR(service_rec.service_date, 'DD-MON-YYYY'), 14) ||
+                RPAD(SUBSTR(service_rec.service_name, 1, 26), 28) ||
+                LPAD(TO_CHAR(service_rec.standard_cost, 'FM99,990.00'), 15) ||
+                LPAD(TO_CHAR(service_rec.actual_cost, 'FM99,990.00'), 15) ||
+                LPAD(TO_CHAR(v_variance, 'SFM99,990.00'), 15) ||
+                LPAD(CASE WHEN service_rec.standard_cost > 0
+                          THEN TO_CHAR((v_variance / service_rec.standard_cost) * 100, 'SFM990.0') || '%'
+                          ELSE 'N/A' END, 12)
             );
-            
-            v_event_count := v_event_count + 1;
-            v_total_cost := v_total_cost + service_rec.actual_cost;
+            v_event_count    := v_event_count + 1;
+            v_total_actual   := v_total_actual + service_rec.actual_cost;
+            v_total_standard := v_total_standard + service_rec.standard_cost;
         END LOOP;
-        
-        DBMS_OUTPUT.PUT_LINE('');
-        DBMS_OUTPUT.PUT_LINE('Overall Summary for Bus ' || bus_rec.plate_number || ':');
-        DBMS_OUTPUT.PUT_LINE(RPAD('Total Maintenance Events:', 35) || LPAD(v_event_count, 22));
-        DBMS_OUTPUT.PUT_LINE(RPAD('Total Lifetime Maintenance Cost:', 35) || 'RM ' || LPAD(TO_CHAR(v_total_cost, 'FM99,999,990.00'), 19));
-        
-        DBMS_OUTPUT.PUT_LINE(RPAD('=', 70, '='));
+
+        DBMS_OUTPUT.PUT_LINE(RPAD('-', 110, '-'));
+        DBMS_OUTPUT.PUT_LINE('Overall Financial Summary for Bus ' || bus_rec.plate_number || ':');
+        DBMS_OUTPUT.PUT_LINE(RPAD('Total Maintenance Events:', 35) || LPAD(v_event_count, 20));
+        DBMS_OUTPUT.PUT_LINE(RPAD('Total Standard Cost:', 35) || 'RM ' || LPAD(TO_CHAR(v_total_standard, 'FM999,990.00'), 17));
+        DBMS_OUTPUT.PUT_LINE(RPAD('Total Actual Cost:', 35) || 'RM ' || LPAD(TO_CHAR(v_total_actual, 'FM999,990.00'), 17));
+        DBMS_OUTPUT.PUT_LINE(RPAD('Total Lifetime Variance:', 35) || 'RM ' || LPAD(TO_CHAR(v_total_actual - v_total_standard, 'SFM999,990.00'), 17));
+        DBMS_OUTPUT.PUT_LINE(RPAD('=', 110, '='));
     END LOOP;
     
     IF NOT v_bus_found THEN
         DBMS_OUTPUT.PUT_LINE('Error: No bus found with ID ' || p_bus_id || '.');
     END IF;
-
 EXCEPTION
     WHEN OTHERS THEN
         DBMS_OUTPUT.PUT_LINE('An error occurred while generating the report: ' || SQLERRM);
 END rpt_bus_maintenance_history;
+/
+
+--=============================================================================
+-- Demonstration Script
+--=============================================================================
+PROMPT =================================================================
+PROMPT DEMONSTRATING REPORTS
+PROMPT =================================================================
+
+SET LINESIZE 180;
+
+--
+-- DEMO 1: rpt_campaign_analytics
+--
+PROMPT --- Testing Report 1: Campaign Analytics ---
+
+PROMPT [SUCCESS CASE 1.1] Generating detailed analytics report for 2025.
+BEGIN
+    rpt_campaign_analytics(p_year => 2025);
+END;
+/
+
+--
+-- DEMO 2: rpt_bus_maintenance_history
+--
+PROMPT --- Testing Report 2: Bus Maintenance History ---
+
+PROMPT [SUCCESS CASE 2.1] Generating maintenance history for Bus ID 31 (a bus with service records).
+BEGIN
+    rpt_bus_maintenance_history(p_bus_id => 31);
+END;
 /
