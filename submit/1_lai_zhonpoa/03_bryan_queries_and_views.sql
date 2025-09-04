@@ -145,9 +145,9 @@ FROM (
         vb.company_name,
         SUM(vb.base_price) AS total_revenue,
         COUNT(vb.ticket_id) AS ticket_count
-    FROM V_BOOKING_DETAILS vb
-    WHERE vb.ticket_status = 'Booked'
-      AND EXTRACT(YEAR FROM vb.booking_date) = &query_year -- MODIFICATION: Filter by the defined year
+        FROM V_BOOKING_DETAILS vb
+        WHERE vb.ticket_status = 'Booked'
+            AND EXTRACT(YEAR FROM vb.booking_date) = &query_year
     GROUP BY
         TO_CHAR(vb.booking_date, 'YYYY-MM'),
         vb.company_name
