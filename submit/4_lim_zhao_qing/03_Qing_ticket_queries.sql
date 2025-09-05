@@ -6,11 +6,85 @@
 
 SET SERVEROUTPUT ON;
 SET PAGESIZE 120;
-SET LINESIZE 150;
+SET LINESIZE 200;
 SET WRAP OFF;
 SET FEEDBACK ON;
 SET HEADING ON;
 CLEAR COLUMNS;
+
+
+
+-- Create views for both queries
+CREATE OR REPLACE VIEW v_monthly_refunds AS
+SELECT 
+    r.refund_id,
+    r.refund_date,
+    r.amount AS refund_amount,
+    r.refund_method,
+    m.name AS member_name,
+    s.origin_station || ' To ' || s.destination_station AS route,
+    ROUND((s.departure_time - r.refund_date) * 24, 1) AS hours_before
+FROM Refund r
+INNER JOIN Ticket t ON r.ticket_id = t.ticket_id
+INNER JOIN Schedule s ON t.schedule_id = s.schedule_id
+INNER JOIN BookingDetails bd ON t.ticket_id = bd.ticket_id
+INNER JOIN Booking b ON bd.booking_id = b.booking_id
+INNER JOIN Member m ON b.member_id = m.member_id;
+
+CREATE OR REPLACE VIEW v_tomorrow_departures AS
+SELECT 
+    t.ticket_id,
+    t.seat_number,
+    t.status AS ticket_status,
+    s.departure_time,
+    s.origin_station || ' To ' || s.destination_station AS route,
+    c.name AS company_name,
+    CASE 
+        WHEN t.status = 'Booked' THEN m.name
+        ELSE NULL 
+    END AS passenger_name,
+    CASE 
+        WHEN pr.discount_type = 'Percentage' THEN 
+            ROUND(s.base_price * (1 - pr.discount_value/100), 2)
+        WHEN pr.discount_type = 'Fixed Amount' THEN 
+            ROUND(s.base_price - pr.discount_value, 2)
+        ELSE s.base_price
+    END AS final_price,
+    ROUND((s.departure_time - SYSDATE) * 24, 1) AS hours_until
+FROM Ticket t
+INNER JOIN Schedule s ON t.schedule_id = s.schedule_id
+INNER JOIN Bus bus ON s.bus_id = bus.bus_id
+INNER JOIN Company c ON bus.company_id = c.company_id
+LEFT JOIN Promotion pr ON t.promotion_id = pr.promotion_id
+LEFT JOIN BookingDetails bd ON t.ticket_id = bd.ticket_id
+LEFT JOIN Booking b ON bd.booking_id = b.booking_id
+LEFT JOIN Member m ON b.member_id = m.member_id
+WHERE TRUNC(s.departure_time) = TRUNC(SYSDATE + 1);
+
+-- Create indexes for better performance
+CREATE INDEX idx_refund_date ON Refund(refund_date);
+CREATE INDEX idx_schedule_departure ON Schedule(departure_time);
+
+-- Custom exception for invalid month/year
+CREATE OR REPLACE PROCEDURE validate_month_year(
+    p_month IN NUMBER,
+    p_year IN NUMBER
+) IS
+    invalid_date_exception EXCEPTION;
+    PRAGMA EXCEPTION_INIT(invalid_date_exception, -20001);
+BEGIN
+    IF p_month NOT BETWEEN 1 AND 12 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Invalid month. Must be between 1 and 12.');
+    END IF;
+    
+    IF p_year < 2020 OR p_year > EXTRACT(YEAR FROM SYSDATE) + 1 THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Invalid year. Must be between 2020 and next year.');
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE;
+END validate_month_year;
+/
 
 PROMPT;
 PROMPT ====================================================================================;
@@ -34,7 +108,7 @@ PROMPT Query 1: Tickets successfully refunded in month &query_month of &query_ye
 COLUMN refund_id        FORMAT 99999 HEADING "Refund|ID"
 COLUMN refund_date      FORMAT A11 HEADING "Refund|Date"
 COLUMN refund_amount    FORMAT 999.99 HEADING "Amount|RM"
-COLUMN refund_method    FORMAT A12 HEADING "Method"
+COLUMN refund_method    FORMAT A20 HEADING "Method"
 COLUMN member_name      FORMAT A18 HEADING "Member"
 COLUMN route            FORMAT A28 HEADING "Route"
 COLUMN hours_before     FORMAT 9999.9 HEADING "Hours Before"

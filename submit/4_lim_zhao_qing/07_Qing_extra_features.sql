@@ -645,10 +645,10 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE('    ELIGIBILITY CHECKS:');
         BEGIN
             v_eligibility := is_ticket_eligible(ticket_rec.ticket_id, 'CANCEL');
-            DBMS_OUTPUT.PUT_LINE('      Cancellation ......: ' || SUBSTR(v_eligibility, 1, 55));
+            DBMS_OUTPUT.PUT_LINE('      Cancellation ......: ' || SUBSTR(v_eligibility, 1, 80));
             
             v_eligibility := is_ticket_eligible(ticket_rec.ticket_id, 'EXTEND');
-            DBMS_OUTPUT.PUT_LINE('      Extension ..........: ' || SUBSTR(v_eligibility, 1, 55));
+            DBMS_OUTPUT.PUT_LINE('      Extension ..........: ' || SUBSTR(v_eligibility, 1, 80));
         EXCEPTION
             WHEN OTHERS THEN
                 DBMS_OUTPUT.PUT_LINE('      Status ............: ELIGIBILITY CHECK ERROR');

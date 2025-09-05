@@ -442,6 +442,7 @@ BEGIN
         )
         WHERE ROWNUM = 1;
         
+        
         DBMS_OUTPUT.PUT_LINE('Ticket ID found for extension: ' || v_test_ticket_id);
         DBMS_OUTPUT.PUT_LINE('');
         
@@ -501,6 +502,6 @@ END test_ticket_procedures;
 /
 
 PROMPT Stored procedures created successfully!
-PROMPT To test the procedures, run: EXEC test_ticket_procedures;
+
 
 COMMIT;
