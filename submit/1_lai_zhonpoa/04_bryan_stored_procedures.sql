@@ -45,7 +45,7 @@ SET SERVEROUTPUT ON;
 
 
 --=============================================================================
--- Procedure 1: Add New Staff (Enhanced for Robustness)
+-- Procedure 1: Add New Staff
 --=============================================================================
 -- Purpose: Safely adds a new staff member to the system. This enhanced
 --          version includes proactive validation of input parameters to provide
