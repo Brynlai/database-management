@@ -16,6 +16,29 @@ COLUMN dest_station   FORMAT A18
 COLUMN platform_no    FORMAT A8
 COLUMN status         FORMAT A10
 
+CREATE OR REPLACE VIEW V_SCHEDULE_ASSIGNMENTS AS
+SELECT
+    s.schedule_id,
+    s.bus_id,
+    b.plate_number,
+    b.company_id,
+    c.name               AS company_name,
+    s.departure_time,
+    s.arrival_time,
+    s.base_price,
+    s.origin_station,
+    s.destination_station,
+    s.platform_no,
+    s.status,
+    dl.driver_id,
+    d.name               AS driver_name,
+    d.license_no
+FROM       Schedule   s
+JOIN       Bus        b  ON b.bus_id       = s.bus_id
+LEFT JOIN  Company    c  ON c.company_id   = b.company_id
+LEFT JOIN  DriverList dl ON dl.schedule_id = s.schedule_id
+LEFT JOIN  Driver     d  ON d.driver_id    = dl.driver_id;
+
 PROMPT =========================================================
 PROMPT = Index (optimization for overlap checks and lookups)
 PROMPT =========================================================
@@ -34,71 +57,33 @@ ORDER  BY index_name, column_position;
 
 PROMPT
 PROMPT =========================================================
-PROMPT = Query 1: Drivers assigned to a schedule
+PROMPT = Query 1: Tickets on a specify schedule 
 PROMPT =========================================================
 
--- Bind variable for schedule_id (change as needed)
-VARIABLE p_schedule_id NUMBER
-EXEC :p_schedule_id := 166;
+SELECT v.schedule_id,
+       v.plate_number,
+       v.driver_id,
+       v.driver_name,
+       COUNT(t.ticket_id) AS total_booked_tickets
+FROM   V_SCHEDULE_ASSIGNMENTS v
+JOIN   Ticket t ON v.schedule_id = t.schedule_id
+WHERE  t.schedule_id = 288
+GROUP  BY v.schedule_id, v.plate_number, v.driver_id, v.driver_name;
 
-SELECT d.driver_id,
-       d.name                      AS driver_name,
-       d.license_no,
-       dl.assignment_notes         AS assignment
-FROM   DriverList dl
-JOIN   Driver     d ON d.driver_id = dl.driver_id
-WHERE  dl.schedule_id = :p_schedule_id
-ORDER  BY d.name;
-
--- (via view, if you created V_SCHEDULE_ASSIGNMENTS)
--- SELECT driver_id,
---        driver_name,
---        license_no,
---        schedule_id,
---        platform_no,
---        TO_CHAR(departure_time,'DD-MON-YYYY HH24:MI') AS dep_time,
---        TO_CHAR(arrival_time,  'DD-MON-YYYY HH24:MI') AS arr_time,
---        status
--- FROM   V_SCHEDULE_ASSIGNMENTS
--- WHERE  schedule_id = :p_schedule_id
--- ORDER  BY driver_name;
 
 PROMPT
 PROMPT =========================================================
-PROMPT = Query 2: Next 7 days schedules for a bus (by plate no.)
+PROMPT = Query 2: Driver’s Schedules within a Time Period
 PROMPT =========================================================
 
--- Bind variable for plate number 
-VARIABLE p_plate VARCHAR2(20)
-EXEC :p_plate := 'QBT-345';
+SELECT driver_id,
+       driver_name,
+       COUNT(schedule_id) AS total_schedules
+FROM   V_SCHEDULE_ASSIGNMENTS
+WHERE  departure_time BETWEEN TO_DATE('01-JAN-2025','DD-MON-YYYY') AND TO_DATE('01-SEP-2025','DD-MON-YYYY') AND driver_id = '121'
+GROUP  BY driver_id, driver_name
+ORDER  BY total_schedules DESC;
 
-SELECT s.schedule_id,
-       b.plate_number,
-       TO_CHAR(s.departure_time,'DD-MON-YYYY HH24:MI') AS dep_time,
-       TO_CHAR(s.arrival_time,  'DD-MON-YYYY HH24:MI') AS arr_time,
-       s.origin_station         AS origin_station,
-       s.destination_station    AS dest_station,
-       s.platform_no,
-       s.status
-FROM   Schedule s
-JOIN   Bus      b ON b.bus_id = s.bus_id
-WHERE  b.plate_number = :p_plate
-  AND  s.departure_time BETWEEN SYSDATE AND SYSDATE + 7
-ORDER  BY s.departure_time;
-
--- (via view, if you created V_SCHEDULE_ASSIGNMENTS):
--- SELECT schedule_id,
---        plate_number,
---        TO_CHAR(departure_time,'DD-MON-YYYY HH24:MI') AS dep_time,
---        TO_CHAR(arrival_time,  'DD-MON-YYYY HH24:MI') AS arr_time,
---        origin_station,
---        destination_station,
---        platform_no,
---        status
--- FROM   V_SCHEDULE_ASSIGNMENTS
--- WHERE  plate_number = :p_plate
---   AND  departure_time BETWEEN SYSDATE AND SYSDATE + 7
--- ORDER  BY departure_time;
 
 PROMPT
 PROMPT =========================== End of Queries ===========================

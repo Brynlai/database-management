@@ -24,13 +24,7 @@ COLUMN status         FORMAT A10
 -- ===========================================================
 -- 1) Index (safe creation, skip if exists)
 -- ===========================================================
-BEGIN
-  EXECUTE IMMEDIATE 'CREATE INDEX idx_schedule_bus_time ON Schedule (bus_id, departure_time)';
-EXCEPTION
-  WHEN OTHERS THEN
-    IF SQLCODE = -955 THEN NULL; ELSE RAISE; END IF;
-END;
-/
+CREATE INDEX idx_schedule_bus_time ON Schedule (bus_id, departure_time);
 
 -- Confirm index
 SELECT index_name, table_name, column_name

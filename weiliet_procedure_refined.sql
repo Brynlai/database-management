@@ -1,21 +1,3 @@
--- ===== Display settings =====
-SET SERVEROUTPUT ON
-SET LINESIZE 140
-SET PAGESIZE 100
-COLUMN index_name     FORMAT A28
-COLUMN table_name     FORMAT A12
-COLUMN column_name    FORMAT A18
-COLUMN driver_name    FORMAT A22
-COLUMN license_no     FORMAT A16
-COLUMN assignment     FORMAT A30
-COLUMN plate_number   FORMAT A12
-COLUMN dep_time       FORMAT A20
-COLUMN arr_time       FORMAT A20
-COLUMN origin_station FORMAT A18
-COLUMN dest_station   FORMAT A18
-COLUMN platform_no    FORMAT A8
-COLUMN status         FORMAT A10
-
 CREATE OR REPLACE FUNCTION check_bus_overlap (
     p_bus_id         IN Schedule.bus_id%TYPE,
     p_departure_time IN Schedule.departure_time%TYPE,
@@ -292,3 +274,8 @@ WHERE  schedule_id = (SELECT MAX(schedule_id) FROM Schedule);
 --   DBMS_OUTPUT.PUT_LINE('Created schedule: '||v_new_id);
 -- END;
 -- /
+
+--BEGIN
+--  schedule_cancel_trip(p_schedule_id => 240);
+--END;
+--/
