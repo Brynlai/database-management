@@ -1,3 +1,9 @@
+-- ============
+-- INDEXES
+-- ============
+CREATE INDEX idx_schedule_bus_id ON Schedule(bus_id);
+CREATE INDEX idx_booking_member_id ON Booking(member_id);
+
 -- =================================
 -- VIEW 1: V_MEMBER_TRAVEL_HISTORY
 -- =================================
