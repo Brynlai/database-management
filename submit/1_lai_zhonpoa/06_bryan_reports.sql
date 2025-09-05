@@ -26,7 +26,7 @@ SET SERVEROUTPUT ON SIZE 1000000;
 
 
 --=============================================================================
--- Report 1: Campaign Analytics Dashboard (Final Version)
+-- Report 1: Campaign Analytics Dashboard
 --=============================================================================
 -- Purpose: Provides a strategic, tabular analytics dashboard for marketing.
 --          Each campaign is displayed as a single row, showing key
