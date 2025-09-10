@@ -87,6 +87,40 @@ RAISE;
 
 END Add_New_Staff;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 / --=============================================================================
 -- Procedure 2: Reassign Driver for a Schedule (Upgraded for Business Value)
 --=============================================================================
@@ -197,6 +231,33 @@ RAISE;
 
 END Reassign_Driver_For_Schedule;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 / --=============================================================================
 -- Demonstration Script
 --=============================================================================
@@ -256,6 +317,33 @@ BEGIN Add_New_Staff(
 
 END;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 / PROMPT [FAILURE CASE 1.3] Attempting to
 add
     a staff member with an invalid role.DECLARE v_new_id NUMBER;
@@ -271,7 +359,18 @@ BEGIN Add_New_Staff(
 
 END;
 
-/ --
+/ 
+
+
+
+
+
+
+
+
+
+
+--
 -- DEMO 2: Reassign_Driver_For_Schedule Procedure
 --
 PROMPT --- Testing Procedure 2: Reassign_Driver_For_Schedule ---
@@ -344,6 +443,27 @@ COMMIT;
 
 END;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 / PROMPT Initial state for temporary Schedule 99999:
 SELECT
     dl.schedule_id,
@@ -363,6 +483,19 @@ PROMPT [SUCCESS CASE 2.1] Reassigning a driver on the temporary schedule.BEGIN R
 );
 
 END;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 / PROMPT State
 after

@@ -7,6 +7,21 @@
 SET
     SERVEROUTPUT ON;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 --=============================================================================
 -- Trigger 1: Check Staff Assignment
 --=============================================================================
@@ -105,6 +120,24 @@ END IF;
 
 END;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 / --=============================================================================
 -- Demonstration Script
 --=============================================================================
@@ -182,6 +215,17 @@ COMMIT;
 
 END;
 
+
+
+
+
+
+
+
+
+
+
+
 / PROMPT [SUCCESS CASE 1.1] Assigning an active staff member to a matching role.BEGIN
 INSERT INTO
     StaffAllocation(service_transaction_id, staff_id, role)
@@ -197,6 +241,20 @@ ROLLBACK;
 
 -- Rollback to keep test environment clean for next step
 END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 / PROMPT [FAILURE CASE 1.2] Assigning a staff member to a mismatched role.BEGIN
 INSERT INTO
@@ -247,7 +305,19 @@ COMMIT;
 
 END;
 
-/ --
+/ 
+
+
+
+
+
+
+
+
+
+
+
+--
 -- DEMO 2: trg_prevent_company_deletion
 --
 PROMPT --- Testing Trigger 2: Prevent Company Deletion with Diagnostics ---
@@ -264,6 +334,16 @@ WHERE
     company_id = 999;
 
 COMMIT;
+
+
+
+
+
+
+
+
+
+
 
 -- Create company and buses
 INSERT INTO
@@ -290,6 +370,11 @@ COMMIT;
 
 END;
 
+
+
+
+
+
 / PROMPT Current buses for 'Temp Test Transport':
 SELECT
     plate_number
@@ -298,6 +383,13 @@ FROM
 WHERE
     company_id = 999;
 
+
+
+
+
+
+
+
 PROMPT [FAILURE CASE 2.1] Attempting to delete the company while it still owns buses.BEGIN
 DELETE FROM
     Company
@@ -305,6 +397,12 @@ WHERE
     company_id = 999;
 
 END;
+
+
+
+
+
+
 
 / PROMPT [SUCCESS CASE 2.2] Deleting the buses first,
 then deleting the company.BEGIN -- First, reassign or delete the buses
@@ -326,6 +424,15 @@ DBMS_OUTPUT.PUT_LINE(
 COMMIT;
 
 END;
+
+
+
+
+
+
+
+
+
 
 / -- Verification: Check if company is gone
 SELECT

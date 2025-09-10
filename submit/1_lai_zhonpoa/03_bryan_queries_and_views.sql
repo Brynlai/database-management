@@ -84,6 +84,45 @@ FROM
 
 COMMENT ON TABLE V_STAFF_SERVICE_WORK IS 'View mapping staff to their service tasks and costs, used for operational performance reporting.';
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 --=============================================================================
 -- Query 1: Annual Revenue Analysis with Market Share (Strategic Level)
 --=============================================================================
@@ -147,6 +186,39 @@ CLEAR BREAKS;
 CLEAR COMPUTES;
 
 TTITLE OFF;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 --=============================================================================
 -- Query 2: Bus Profitability and Performance Analysis (Tactical/Strategic Level)
