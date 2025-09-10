@@ -8,8 +8,8 @@
 -- Query 2: Bus schedule search
 
 -- 2025-12-17
--- origin station: Port Patricia
--- destination station: Lake Jasonhaven
+-- origin station: Port Dwayneport
+-- destination station: Jamesside
 
 
 
