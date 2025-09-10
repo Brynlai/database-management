@@ -50,6 +50,7 @@ SELECT
     COUNT(DISTINCT p.promotion_id) AS promo_count,
     COUNT(t.ticket_id) AS tickets_sold,
     NVL(SUM(s.base_price), 0) AS gross_revenue,
+    -- Compute discounts based on type
     NVL(
         SUM(
             CASE
@@ -90,6 +91,7 @@ v_grand_adj_profit NUMBER;
 v_report_generated BOOLEAN := FALSE;
 
 BEGIN
+-- Calculate grand totals from subquery aggregating by campaign
 SELECT
     NVL(SUM(tickets_sold), 0),
     NVL(SUM(gross_revenue), 0),
@@ -187,6 +189,7 @@ DBMS_OUTPUT.PUT_LINE(
         TO_CHAR(v_stats_rec.total_discounts, 'FM99,999.00'),
         18
     ) || LPAD(TO_CHAR(v_net_revenue, 'FM99,999.00'), 18) || LPAD(TO_CHAR(v_adj_profit, 'SFM99,999.00'), 18) || LPAD(
+        -- Calculate average per ticket
         TO_CHAR(
             CASE
                 WHEN v_stats_rec.tickets_sold > 0 THEN v_net_revenue / v_stats_rec.tickets_sold
@@ -314,6 +317,7 @@ DBMS_OUTPUT.PUT_LINE(
         TO_CHAR(service_rec.actual_cost, 'FM99,990.00'),
         15
     ) || LPAD(TO_CHAR(v_variance, 'SFM99,990.00'), 15) || LPAD(
+        -- Compute variance percentage if standard cost > 0
         CASE
             WHEN service_rec.standard_cost > 0 THEN TO_CHAR(
                 (v_variance / service_rec.standard_cost) * 100,

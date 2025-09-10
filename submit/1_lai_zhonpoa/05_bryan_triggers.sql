@@ -22,6 +22,7 @@ UPDATE
     ON StaffAllocation FOR EACH ROW DECLARE v_staff_details Staff % ROWTYPE;
 
 BEGIN -- Step 1: Fetch the staff member's full details for validation.
+-- Fetch staff details, handle if not found
 BEGIN
 SELECT
     * INTO v_staff_details
@@ -77,6 +78,7 @@ WHERE
 
 -- Step 2: If buses exist, gather examples and raise a detailed error.
 IF v_bus_count > 0 THEN -- Step 2a: Use LISTAGG to get a comma-separated list of plate numbers.
+-- Get up to 3 bus examples using LISTAGG
 SELECT
     LISTAGG(plate_number, ', ') WITHIN GROUP (
         ORDER BY

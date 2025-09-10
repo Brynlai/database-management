@@ -22,6 +22,7 @@ OR REPLACE PROCEDURE Add_New_Staff (
     p_status IN Staff.status % TYPE,
     o_new_staff_id OUT Staff.staff_id % TYPE
 ) AS BEGIN -- Step 1: Proactive validation for role
+-- Validate role is one of allowed values
 IF p_role NOT IN (
     'Counter Staff',
     'Cleaner',
@@ -35,6 +36,7 @@ IF p_role NOT IN (
 END IF;
 
 -- Step 2: Proactive validation for status
+-- Validate status is one of allowed values
 IF p_status NOT IN ('Active', 'Resigned', 'On Leave') THEN RAISE_APPLICATION_ERROR(
     -20004,
     'Validation Error: Invalid status specified. Must be one of: Active, Resigned, On Leave.'
@@ -43,6 +45,7 @@ IF p_status NOT IN ('Active', 'Resigned', 'On Leave') THEN RAISE_APPLICATION_ERR
 END IF;
 
 -- Step 3: Insert the new record and capture the new ID
+-- Insert staff and return generated ID
 INSERT INTO
     Staff (
         staff_id,
@@ -104,6 +107,7 @@ v_new_driver_count NUMBER;
 v_old_assignment_count NUMBER;
 
 BEGIN -- Step 1: Validate that the schedule exists.
+-- Check if schedule exists
 SELECT
     COUNT(*) INTO v_schedule_count
 FROM
@@ -119,6 +123,7 @@ IF v_schedule_count = 0 THEN RAISE_APPLICATION_ERROR(
 END IF;
 
 -- Step 2: Validate that the new driver exists.
+-- Check if new driver exists
 SELECT
     COUNT(*) INTO v_new_driver_count
 FROM
@@ -134,6 +139,7 @@ IF v_new_driver_count = 0 THEN RAISE_APPLICATION_ERROR(
 END IF;
 
 -- Step 3: Crucial Validation - Verify the old driver is currently assigned to this schedule.
+-- Verify old driver is assigned to this schedule
 SELECT
     COUNT(*) INTO v_old_assignment_count
 FROM
@@ -150,12 +156,14 @@ IF v_old_assignment_count = 0 THEN RAISE_APPLICATION_ERROR(
 END IF;
 
 -- Step 4: Perform the reassignment transactionally.
+-- Remove old assignment
 DELETE FROM
     DriverList
 WHERE
     schedule_id = p_schedule_id
     AND driver_id = p_old_driver_id;
 
+-- Add new assignment
 INSERT INTO
     DriverList (
         schedule_id,
