@@ -16,7 +16,8 @@ SET
 --          A grand total summary is provided. This procedure uses a nested
 --          cursor structure to meet assignment requirements.
 CREATE
-OR REPLACE PROCEDURE rpt_campaign_analytics (p_year IN NUMBER) AS CURSOR campaign_cursor IS
+OR REPLACE PROCEDURE rpt_campaign_analytics (p_year IN NUMBER) AS 
+CURSOR campaign_cursor IS
 SELECT
     c.campaign_id,
     c.campaign_name
@@ -90,7 +91,7 @@ v_grand_adj_profit NUMBER;
 
 v_report_generated BOOLEAN := FALSE;
 
-BEGIN
+BEGIN 
 -- Calculate grand totals from subquery aggregating by campaign
 SELECT
     NVL(SUM(tickets_sold), 0),
