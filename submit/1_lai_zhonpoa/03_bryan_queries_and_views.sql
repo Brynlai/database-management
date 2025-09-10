@@ -12,6 +12,7 @@
 PROMPT Creating View: V_BOOKING_DETAILS CREATE
 OR REPLACE VIEW V_BOOKING_DETAILS AS
 -- Join multiple tables for comprehensive booking data
+-- Used in 4.1.1
 SELECT
     b.booking_id,
     b.booking_date,
@@ -70,6 +71,7 @@ COMMENT ON TABLE V_BUS_SCHEDULE_DETAILS IS 'A simplified view joining schedule, 
 PROMPT Creating View: V_STAFF_SERVICE_WORK CREATE
 OR REPLACE VIEW V_STAFF_SERVICE_WORK AS
 -- Join staff, allocation, and service details
+-- 4.1.2
 SELECT
     st.staff_id,
     st.role,

@@ -17,6 +17,38 @@ CREATE INDEX idx_driverlist_driver_id ON DriverList(driver_id);
 CREATE INDEX idx_staffallocation_staff_id ON StaffAllocation(staff_id);
 
 
+CREATE SEQUENCE staff_seq START WITH 1 INCREMENT BY 1;
+
+
+CREATE SEQUENCE company_seq START WITH 1 INCREMENT BY 1;
+
+--- EXCEPTION:
+--- DUP_VAL_ON_INDEX .... 4.1.3 Procedure
+--- RAISE_APPLICATION_ERROR ... 4.1.6 Trigger
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- -- Index for Booking table
 -- -- Purpose: Speeds up finding all bookings made by a specific member.
 -- CREATE INDEX idx_booking_member_id ON Booking(member_id);
